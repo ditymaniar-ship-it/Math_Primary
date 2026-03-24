@@ -10,6 +10,7 @@ body{
     background:linear-gradient(#a1c4fd,#fbc2eb);
 }
 
+/* GAME BOX */
 .game-box{
     background:white;
     padding:20px;
@@ -18,17 +19,20 @@ body{
     border-radius:15px;
 }
 
+/* INPUT */
 input{
     padding:10px;
     width:70%;
 }
 
+/* BUTTONS */
 button{
     padding:10px;
-    margin:6px;
+    margin:8px;
     cursor:pointer;
 }
 
+/* OPTIONS */
 .option{
     display:block;
     width:80%;
@@ -42,6 +46,15 @@ button{
 .wrong{background:red;}
 .locked{background:grey;}
 
+/* LEVEL SCREEN VISIBILITY FIX */
+#levelScreen{
+    background:#fff3cd;
+    padding:20px;
+    border-radius:10px;
+    margin-top:20px;
+}
+
+/* POPUP CENTER */
 .popup{
     position:fixed;
     top:50%;
@@ -50,10 +63,11 @@ button{
     background:black;
     color:white;
     padding:20px;
+    border-radius:10px;
     display:none;
 }
 
-/* SHAKE */
+/* SHAKE EFFECT */
 @keyframes shake{
 0%{transform:translate(0,0);}
 25%{transform:translate(-5px,5px);}
@@ -71,23 +85,24 @@ button{
 
 <h2>🎮 Math Adventure</h2>
 
-<!-- START -->
+<!-- START SCREEN -->
 <div id="startScreen">
 <input id="playerName" placeholder="Enter name" autofocus>
 <br>
 <button onclick="startGame()">Start</button>
 </div>
 
-<!-- LEVELS -->
+<!-- LEVEL SCREEN -->
 <div id="levelScreen" style="display:none;">
-<h3>Select Level</h3>
-<button onclick="startLevel(1)">Level 1</button>
-<button id="lvl2" class="locked" onclick="startLevel(2)">Level 2 🔒</button>
-<button id="lvl3" class="locked" onclick="startLevel(3)">Level 3 🔒</button>
-<button id="lvl4" class="locked" onclick="startLevel(4)">Boss 👑 🔒</button>
+<h2>🎯 Choose Your Level</h2>
+
+<button onclick="startLevel(1)">Level 1</button><br>
+<button id="lvl2" class="locked" onclick="startLevel(2)">Level 2 🔒</button><br>
+<button id="lvl3" class="locked" onclick="startLevel(3)">Level 3 🔒</button><br>
+<button id="lvl4" class="locked" onclick="startLevel(4)">👑 Boss Level 🔒</button>
 </div>
 
-<!-- GAME -->
+<!-- GAME SCREEN -->
 <div id="gameScreen" style="display:none;">
 <p id="status"></p>
 <p id="question"></p>
@@ -113,16 +128,20 @@ document.getElementById("playerName").addEventListener("keydown",e=>{
     if(e.key==="Enter")startGame();
 });
 
-/* START */
+/* START GAME */
 function startGame(){
     name=document.getElementById("playerName").value.trim();
-    if(name===""){showPopup("Enter name");return;}
+
+    if(name===""){
+        showPopup("Enter your name!");
+        return;
+    }
 
     document.getElementById("startScreen").style.display="none";
     document.getElementById("levelScreen").style.display="block";
 }
 
-/* LEVEL */
+/* START LEVEL */
 function startLevel(l){
     if(l>unlocked){
         showPopup("Level Locked 🔒");
@@ -179,7 +198,7 @@ function loadQ(){
     }
     else{
         let t=Math.floor(Math.random()*20)+20;
-        text="👑 BOSS: Divide "+t+" treasures equally! Select all possible group sizes";
+        text="👑 BOSS: Divide "+t+" treasures equally! Select all group sizes";
 
         for(let i=1;i<=10;i++){
             opts.push(i);
@@ -249,7 +268,7 @@ function selectOption(btn,val){
     }
 }
 
-/* CHECK */
+/* CHECK ANSWER */
 function checkAnswer(){
     let correct=answers.every(a=>selected.includes(a)) &&
                 selected.every(s=>answers.includes(s));
@@ -291,7 +310,7 @@ function checkAnswer(){
     }
 }
 
-/* NEXT */
+/* NEXT QUESTION */
 function nextQuestion(){
     qIndex++;
 
