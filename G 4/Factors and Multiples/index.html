@@ -1,52 +1,57 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Factor & Multiple Adventure</title>
+<title>Math Adventure</title>
+
 <style>
 body {
-    font-family: Arial;
+    font-family: 'Comic Sans MS', cursive;
     text-align: center;
-    background: linear-gradient(120deg, #89f7fe, #66a6ff);
+    background: linear-gradient(-45deg, #fddb92, #a1c4fd, #fbc2eb);
+    background-size: 400% 400%;
+    animation: bg 8s infinite;
+}
+
+@keyframes bg {
+    0% {background-position:0%}
+    50% {background-position:100%}
+    100% {background-position:0%}
 }
 
 .game-box {
     background: white;
     padding: 20px;
-    border-radius: 15px;
+    border-radius: 20px;
     width: 420px;
     margin: auto;
-    margin-top: 40px;
-    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    margin-top: 30px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.2);
 }
 
 button {
-    margin: 6px;
-    padding: 10px;
-    border-radius: 8px;
+    padding: 12px;
+    margin: 8px;
     border: none;
+    border-radius: 10px;
+    font-size: 16px;
     cursor: pointer;
 }
 
 .option {
-    background: #2196F3;
+    background: #4CAF50;
     color: white;
-    width: 80%;
+    width: 85%;
     display: block;
-    margin: 8px auto;
+    margin: 10px auto;
 }
 
-.selected {
-    background: orange !important;
-}
+.selected { background: orange !important; }
+.correct { background: #2ecc71 !important; }
+.wrong { background: #e74c3c !important; }
 
-#nextBtn {
-    background: green;
-    color: white;
-}
+#nextBtn { background: #2196F3; color: white; }
+.locked { background: grey; }
 
-#hint {
-    color: orange;
-}
 </style>
 </head>
 
@@ -54,12 +59,18 @@ button {
 
 <div class="game-box">
 
-<h2>🎮 Factor & Multiple Adventure</h2>
+<h2>🎮 Math Adventure</h2>
 
 <div id="startScreen">
 <input type="text" id="playerName" placeholder="Enter your name"><br><br>
-<button onclick="startGame()">Start Game</button><br><br>
-<button onclick="toggleTeacher()">Teacher Mode</button>
+<button onclick="startGame()">🚀 Start</button>
+</div>
+
+<div id="levelScreen" style="display:none;">
+<h3>🏆 Select Level</h3>
+<button onclick="startLevel(1)" id="lvl1">Level 1</button>
+<button onclick="startLevel(2)" id="lvl2" class="locked">Level 2 🔒</button>
+<button onclick="startLevel(3)" id="lvl3" class="locked">Level 3 🔒</button>
 </div>
 
 <div id="gameScreen" style="display:none;">
@@ -68,178 +79,158 @@ button {
 
 <div id="options"></div>
 
-<button onclick="checkAnswer()">Submit</button>
-<button onclick="nextQuestion()" id="nextBtn" style="display:none;">Next</button>
-
-<p id="hint"></p>
-<button onclick="showHint()">Hint</button>
+<button onclick="checkAnswer()">✅ Submit</button>
+<button onclick="nextQuestion()" id="nextBtn" style="display:none;">➡ Next</button>
 
 <p id="score"></p>
 </div>
 
 </div>
 
+<!-- SOUND EFFECTS -->
+<audio id="correctSound" src="https://www.soundjay.com/buttons/sounds/button-3.mp3"></audio>
+<audio id="wrongSound" src="https://www.soundjay.com/buttons/sounds/button-10.mp3"></audio>
+<audio id="levelSound" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3"></audio>
+
 <script>
-let name = "";
-let level = 1;
-let qIndex = 0;
-let score = 0;
-let lives = 3;
-let teacherMode = false;
+let name="", level=1, qIndex=0, score=0, lives=3;
+let currentAnswers=[], selected=[];
+let unlockedLevel=1;
 
-let currentAnswers = [];
-let selected = [];
+function startGame(){
+    name=document.getElementById("playerName").value;
+    if(name===""){alert("Enter name!");return;}
 
-function startGame() {
-    name = document.getElementById("playerName").value;
-    if (name.trim() === "") {
-        alert("Enter your name!");
-        return;
-    }
+    document.getElementById("startScreen").style.display="none";
+    document.getElementById("levelScreen").style.display="block";
+}
 
-    document.getElementById("startScreen").style.display = "none";
-    document.getElementById("gameScreen").style.display = "block";
+function startLevel(lvl){
+    if(lvl>unlockedLevel) return;
+
+    level=lvl;
+    qIndex=0;
+    score=0;
+    lives=3;
+
+    document.getElementById("levelScreen").style.display="none";
+    document.getElementById("gameScreen").style.display="block";
 
     loadQuestion();
 }
 
-function toggleTeacher() {
-    teacherMode = !teacherMode;
-    alert("Teacher Mode: " + (teacherMode ? "ON" : "OFF"));
-}
-
-function loadQuestion() {
-    selected = [];
-    document.getElementById("nextBtn").style.display = "none";
+function loadQuestion(){
+    selected=[];
+    document.getElementById("nextBtn").style.display="none";
 
     document.getElementById("info").innerText =
-        name + " | Level: " + level + " | ❤️ " + lives;
+        "👤 "+name+" | ❤️ "+lives+" | Level "+level+" | Q "+(qIndex+1)+"/3";
 
-    let q = generateQuestion();
+    let q=generateQuestion();
+    document.getElementById("question").innerText=q.text;
 
-    document.getElementById("question").innerText = q.text;
-
-    let html = "";
-    q.options.forEach(opt => {
-        html += `<button class="option" onclick="selectOption(this, ${opt})">${opt}</button>`;
+    let html="";
+    q.options.forEach(opt=>{
+        html+=`<button class="option" onclick="selectOption(this, ${opt})">${opt}</button>`;
     });
 
-    document.getElementById("options").innerHTML = html;
-
-    currentAnswers = q.answers;
-    window.currentHint = q.hint;
-
-    if (teacherMode) {
-        document.getElementById("hint").innerText =
-            "Answer: " + currentAnswers.join(", ");
-    } else {
-        document.getElementById("hint").innerText = "";
-    }
-
-    document.getElementById("score").innerText =
-        "Score: " + score + " | Question: " + (qIndex+1) + "/3";
+    document.getElementById("options").innerHTML=html;
+    currentAnswers=q.answers;
 }
 
-function selectOption(btn, value) {
-    if (selected.includes(value)) {
-        selected = selected.filter(v => v !== value);
+function selectOption(btn,val){
+    if(selected.includes(val)){
+        selected=selected.filter(v=>v!==val);
         btn.classList.remove("selected");
     } else {
-        selected.push(value);
+        selected.push(val);
         btn.classList.add("selected");
     }
 }
 
-function checkAnswer() {
-    let correct =
-        selected.length === currentAnswers.length &&
-        selected.every(v => currentAnswers.includes(v));
+function checkAnswer(){
+    let allCorrect=currentAnswers.every(a=>selected.includes(a));
+    let noExtra=selected.every(s=>currentAnswers.includes(s));
 
-    if (correct) {
-        score += 10;
-        alert("Correct!");
+    if(allCorrect && noExtra){
+        document.getElementById("correctSound").play();
+        score+=10;
+        document.getElementById("nextBtn").style.display="inline";
     } else {
+        document.getElementById("wrongSound").play();
         lives--;
-        alert("Try again!");
-    }
-
-    document.getElementById("nextBtn").style.display = "inline";
-
-    if (lives === 0) {
-        endGame();
+        alert("❌ Try again!");
+        if(lives===0) endGame();
     }
 }
 
-function nextQuestion() {
+function nextQuestion(){
     qIndex++;
 
-    if (qIndex === 3) {
-        level++;
-        qIndex = 0;
+    if(qIndex===3){
+        unlockNextLevel();
+        return;
     }
 
     loadQuestion();
 }
 
-function endGame() {
-    document.getElementById("gameScreen").innerHTML =
-        "<h2>Game Over</h2><p>Final Score: " + score + "</p>";
-}
+function unlockNextLevel(){
+    document.getElementById("levelSound").play();
 
-function showHint() {
-    document.getElementById("hint").innerText = currentHint;
-}
-
-function generateQuestion() {
-    let num, options = [], answers = [], hint = "", text="";
-
-    if (level === 1) {
-        num = random(10,20);
-        text = "Select factors of " + num;
-
-        for (let i=1;i<=10;i++) {
-            options.push(i);
-            if (num % i === 0) answers.push(i);
-        }
-        hint = "Factors divide the number exactly";
+    if(level===1){
+        unlockedLevel=2;
+        document.getElementById("lvl2").classList.remove("locked");
+    }
+    if(level===2){
+        unlockedLevel=3;
+        document.getElementById("lvl3").classList.remove("locked");
     }
 
-    else if (level === 2) {
-        num = random(2,10);
-        text = "Select multiples of " + num;
+    alert("🎉 Level Complete! New Level Unlocked!");
 
-        for (let i=1;i<=5;i++) {
-            let val = num*i;
+    document.getElementById("gameScreen").style.display="none";
+    document.getElementById("levelScreen").style.display="block";
+}
+
+function endGame(){
+    document.getElementById("gameScreen").innerHTML=
+    "<h2>💀 Game Over</h2><p>Score: "+score+"</p><button onclick='location.reload()'>Restart</button>";
+}
+
+function generateQuestion(){
+    let num,options=[],answers=[],text="";
+
+    if(level===1){
+        num=random(10,20);
+        text="Find factors of "+num;
+        for(let i=1;i<=10;i++){
+            options.push(i);
+            if(num%i===0) answers.push(i);
+        }
+    }
+
+    else if(level===2){
+        num=random(2,10);
+        text="Find multiples of "+num;
+        for(let i=1;i<=5;i++){
+            let val=num*i;
             options.push(val);
             answers.push(val);
         }
-        options.push(random(11,40), random(11,40));
-        hint = "Multiples = number × 1,2,3...";
+        options.push(random(11,40));
     }
 
-    else if (level === 3) {
-        let a = random(10,20);
-        let b = random(10,20);
-        text = "Common factors of " + a + " & " + b;
-
-        for (let i=1;i<=10;i++) {
+    else if(level===3){
+        let a=random(10,20), b=random(10,20);
+        text="Common factors of "+a+" & "+b;
+        for(let i=1;i<=10;i++){
             options.push(i);
-            if (a%i===0 && b%i===0) answers.push(i);
+            if(a%i===0 && b%i===0) answers.push(i);
         }
-        hint = "Find numbers dividing both numbers";
     }
 
-    else {
-        endGame();
-        return;
-    }
-
-    return {
-        text: text,
-        options: shuffle(options),
-        answers: answers,
-        hint: hint
-    };
+    return {text, options:shuffle(options), answers};
 }
 
 function random(min,max){
