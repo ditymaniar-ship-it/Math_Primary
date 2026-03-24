@@ -125,13 +125,14 @@ button{padding:10px;margin:8px;cursor:pointer;}
 let name="",level=1,unlocked=1,qIndex=0;
 let answers=[],selected=[];
 let score=0,timer,timeLeft=12;
+let attempts=0;
 
 /* START */
 function startGame(){
     name=document.getElementById("playerName").value.trim();
     if(name===""){showPopup("Enter name","wrong");return;}
 
-    document.getElementById("bgMusic").play().catch(()=>{});
+    bgMusic.play().catch(()=>{});
 
     startScreen.style.display="none";
     levelScreen.style.display="block";
@@ -142,7 +143,7 @@ function startLevel(l){
     if(l>unlocked){showPopup("Locked","wrong");return;}
 
     level=l;qIndex=0;
-    document.getElementById("progressFill").style.width="0%";
+    progressFill.style.width="0%";
 
     levelScreen.style.display="none";
     gameScreen.style.display="block";
@@ -150,14 +151,14 @@ function startLevel(l){
     loadQ();
 }
 
-/* LOAD QUESTIONS */
+/* LOAD */
 function loadQ(){
     selected=[];
-    document.getElementById("nextBtn").style.display="none";
+    attempts=0;
+    nextBtn.style.display="none";
 
     let text="",opts=[],ans=[];
 
-    // LEVEL 1 - FACTORS
     if(level===1){
         let num=Math.floor(Math.random()*10)+10;
         text="Select all factors of "+num;
@@ -168,19 +169,15 @@ function loadQ(){
         }
     }
 
-    // LEVEL 2 - MULTIPLES (FIXED WITH WRONG OPTIONS)
     else if(level===2){
         let n=Math.floor(Math.random()*5)+2;
         text="Select multiples of "+n;
 
-        // correct
         for(let i=1;i<=4;i++){
             let val=n*i;
-            opts.push(val);
-            ans.push(val);
+            opts.push(val); ans.push(val);
         }
 
-        // wrong options
         while(opts.length<8){
             let wrong=Math.floor(Math.random()*30)+2;
             if(wrong % n !== 0 && !opts.includes(wrong)){
@@ -189,7 +186,6 @@ function loadQ(){
         }
     }
 
-    // LEVEL 3 - HCF
     else if(level===3){
         let a=12+Math.floor(Math.random()*10);
         let b=18+Math.floor(Math.random()*10);
@@ -203,7 +199,6 @@ function loadQ(){
         opts=[c,c+1,c+2,c-1].filter(v=>v>0);
     }
 
-    // LEVEL 4 - LCM
     else if(level===4){
         let a=3+Math.floor(Math.random()*6);
         let b=4+Math.floor(Math.random()*6);
@@ -217,7 +212,6 @@ function loadQ(){
         opts=[c,c+2,c+4,c-2].filter(v=>v>0);
     }
 
-    // BOSS LEVEL - WORD PROBLEM
     else{
         let a=2+Math.floor(Math.random()*5);
         let b=3+Math.floor(Math.random()*5);
@@ -234,7 +228,7 @@ function loadQ(){
     }
 
     answers=ans;
-    document.getElementById("question").innerText=text;
+    question.innerText=text;
 
     opts.sort(()=>Math.random()-0.5);
 
@@ -243,53 +237,18 @@ function loadQ(){
         html+=`<button class="option" onclick="selectOption(this,${o})">${o}</button>`;
     });
 
-    document.getElementById("options").innerHTML=html;
-
+    options.innerHTML=html;
     updateStatus();
 }
 
-/* TIMER */
-function startTimer(){
-    clearInterval(timer);
-    timeLeft=12;
-
-    timer=setInterval(()=>{
-        timeLeft--;
-        updateStatus();
-
-        if(timeLeft===0){
-            clearInterval(timer);
-            showPopup("Time Up","wrong");
-            loadQ();
-        }
-    },1000);
-}
-
-/* STATUS */
-function updateStatus(){
-    document.getElementById("status").innerText=
-    level===5 ? "⏱ "+timeLeft : "Level "+level+" Q"+(qIndex+1)+"/3";
-}
-
-/* SELECT */
-function selectOption(btn,val){
-    if(selected.includes(val)){
-        selected=selected.filter(v=>v!==val);
-        btn.classList.remove("selected");
-    }else{
-        selected.push(val);
-        btn.classList.add("selected");
-    }
-}
-
-/* CHECK */
+/* CHECK WITH 2 ATTEMPTS */
 function checkAnswer(){
-    let correct=answers.every(a=>selected.includes(a)) &&
-                selected.every(s=>answers.includes(s));
+    let correct = answers.every(a=>selected.includes(a)) &&
+                  selected.every(s=>answers.includes(s));
 
     if(correct){
         score+=10;
-        document.getElementById("stars").innerText="⭐ "+score;
+        stars.innerText="⭐ "+score;
 
         correctSound.play();
         showPopup("Correct 🎉","correct");
@@ -299,7 +258,28 @@ function checkAnswer(){
         nextBtn.style.display="inline";
     }
     else{
+        attempts++;
         wrongSound.play();
+
+        if(attempts>=2){
+            showPopup("Correct answers shown","correct");
+
+            document.querySelectorAll(".option").forEach(btn=>{
+                let val=parseInt(btn.innerText);
+
+                if(answers.includes(val)){
+                    btn.style.background="green";
+                }else if(selected.includes(val)){
+                    btn.style.background="red";
+                }
+
+                btn.disabled=true;
+            });
+
+            nextBtn.style.display="inline";
+            return;
+        }
+
         showPopup("Try Again","wrong");
 
         document.querySelector(".game-box").classList.add("shake");
@@ -310,86 +290,6 @@ function checkAnswer(){
             document.querySelector(".game-box").classList.remove("shake");
         },800);
     }
-}
-
-/* NEXT */
-function nextQuestion(){
-    qIndex++;
-
-    let percent=(qIndex/3)*100;
-    document.getElementById("progressFill").style.width=percent+"%";
-
-    if(qIndex===3){
-        unlocked++;
-
-        if(unlocked>=2) lvl2.classList.remove("locked");
-        if(unlocked>=3) lvl3.classList.remove("locked");
-        if(unlocked>=4) lvl4.classList.remove("locked");
-        if(unlocked>=5) boss.classList.remove("locked");
-
-        if(level===5){
-            confetti();
-            showCertificate();
-            return;
-        }
-
-        showPopup("Level Complete","correct");
-
-        gameScreen.style.display="none";
-        levelScreen.style.display="block";
-    }
-    else loadQ();
-}
-
-/* CONFETTI */
-function confetti(){
-    for(let i=0;i<100;i++){
-        let d=document.createElement("div");
-        d.style.position="fixed";
-        d.style.width="5px";
-        d.style.height="5px";
-        d.style.background="hsl("+Math.random()*360+",100%,50%)";
-        d.style.top=Math.random()*100+"%";
-        d.style.left=Math.random()*100+"%";
-        document.body.appendChild(d);
-        setTimeout(()=>d.remove(),2000);
-    }
-}
-
-/* LEADERBOARD */
-function saveScore(){
-    let d=JSON.parse(localStorage.getItem("lb"))||[];
-    d.push({name,score});
-    d.sort((a,b)=>b.score-a.score);
-    d=d.slice(0,5);
-    localStorage.setItem("lb",JSON.stringify(d));
-}
-
-/* CERTIFICATE */
-function showCertificate(){
-    saveScore();
-    let d=JSON.parse(localStorage.getItem("lb"))||[];
-
-    let list="<h3>🏆 Leaderboard</h3>";
-    d.forEach((e,i)=>{list+=`<p>${i+1}. ${e.name} ⭐ ${e.score}</p>`});
-
-    document.body.innerHTML=
-    `<h1>🏅 Certificate</h1>
-    <h2>${name}</h2>
-    <p>Score: ⭐ ${score}</p>
-    ${list}
-    <button onclick="window.print()">Print</button>`;
-}
-
-/* POPUP */
-function showPopup(msg,type){
-    let p=document.getElementById("popup");
-    p.classList.remove("correct","wrong");
-    if(type==="correct") p.classList.add("correct");
-    if(type==="wrong") p.classList.add("wrong");
-    p.innerText=msg;
-    p.style.display="block";
-    setTimeout(()=>p.style.display="none",1200);
 }
 </script>
 
