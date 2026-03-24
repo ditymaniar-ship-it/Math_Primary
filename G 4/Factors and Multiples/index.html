@@ -40,6 +40,20 @@ button{padding:10px;margin:8px;cursor:pointer;}
     border-radius:10px;
 }
 
+/* PROGRESS BAR */
+#progressBar{
+    background:#ddd;
+    height:15px;
+    border-radius:10px;
+    margin-bottom:10px;
+}
+#progressFill{
+    height:100%;
+    width:0%;
+    background:green;
+    border-radius:10px;
+}
+
 /* POPUP */
 .popup{
     position:fixed;
@@ -79,12 +93,14 @@ button{padding:10px;margin:8px;cursor:pointer;}
 
 <h2>🎮 Math Adventure</h2>
 
+<!-- START -->
 <div id="startScreen">
 <input id="playerName" placeholder="Enter name" autofocus>
 <br>
 <button onclick="startGame()">Start</button>
 </div>
 
+<!-- LEVEL -->
 <div id="levelScreen" style="display:none;">
 <h2>🎯 Choose Level</h2>
 <button onclick="startLevel(1)">Level 1</button><br>
@@ -93,7 +109,14 @@ button{padding:10px;margin:8px;cursor:pointer;}
 <button id="lvl4" class="locked" onclick="startLevel(4)">👑 Boss 🔒</button>
 </div>
 
+<!-- GAME -->
 <div id="gameScreen" style="display:none;">
+
+<div id="progressBar">
+<div id="progressFill"></div>
+</div>
+
+<p id="stars">⭐ 0</p>
 <p id="status"></p>
 <p id="question"></p>
 <div id="options"></div>
@@ -115,6 +138,7 @@ button{padding:10px;margin:8px;cursor:pointer;}
 let name="",level=1,unlocked=1,qIndex=0;
 let answers=[],selected=[];
 let lives=3,timer,timeLeft=10;
+let score=0;
 
 /* START */
 function startGame(){
@@ -133,6 +157,8 @@ function startLevel(l){
 
     level=l;qIndex=0;
     if(level===4) lives=3;
+
+    document.getElementById("progressFill").style.width="0%";
 
     document.getElementById("levelScreen").style.display="none";
     document.getElementById("gameScreen").style.display="block";
@@ -221,9 +247,14 @@ function checkAnswer(){
                 selected.every(s=>answers.includes(s));
 
     if(correct){
+        score+=10;
+        document.getElementById("stars").innerText="⭐ "+score;
+
         document.getElementById("correctSound").play();
         showPopup("Correct 🎉","correct");
+
         if(level===4) clearInterval(timer);
+
         document.getElementById("nextBtn").style.display="inline";
     }
     else{
@@ -247,9 +278,16 @@ function checkAnswer(){
     }
 }
 
+/* PROGRESS */
+function updateProgress(){
+    let percent=(qIndex/3)*100;
+    document.getElementById("progressFill").style.width=percent+"%";
+}
+
 /* NEXT */
 function nextQuestion(){
     qIndex++;
+    updateProgress();
 
     if(level===4 && qIndex===3){
         confetti();
@@ -259,9 +297,10 @@ function nextQuestion(){
 
     if(qIndex===3){
         unlocked++;
-        if(unlocked>=2) lvl2.classList.remove("locked");
-        if(unlocked>=3) lvl3.classList.remove("locked");
-        if(unlocked>=4) lvl4.classList.remove("locked");
+
+        if(unlocked>=2) document.getElementById("lvl2").classList.remove("locked");
+        if(unlocked>=3) document.getElementById("lvl3").classList.remove("locked");
+        if(unlocked>=4) document.getElementById("lvl4").classList.remove("locked");
 
         showPopup("Level Complete","correct");
 
@@ -272,23 +311,42 @@ function nextQuestion(){
 
 /* CONFETTI */
 function confetti(){
-    for(let i=0;i<100;i++){
-        let div=document.createElement("div");
-        div.style.position="fixed";
-        div.style.width="5px";
-        div.style.height="5px";
-        div.style.background="red";
-        div.style.top=Math.random()*100+"%";
-        div.style.left=Math.random()*100+"%";
-        document.body.appendChild(div);
-        setTimeout(()=>div.remove(),2000);
+    for(let i=0;i<120;i++){
+        let d=document.createElement("div");
+        d.style.position="fixed";
+        d.style.width="6px";
+        d.style.height="6px";
+        d.style.background="hsl("+Math.random()*360+",100%,50%)";
+        d.style.top=Math.random()*100+"%";
+        d.style.left=Math.random()*100+"%";
+        document.body.appendChild(d);
+        setTimeout(()=>d.remove(),2000);
     }
+}
+
+/* LEADERBOARD */
+function saveScore(){
+    let data=JSON.parse(localStorage.getItem("leaderboard"))||[];
+    data.push({name:name,score:score});
+    data.sort((a,b)=>b.score-a.score);
+    data=data.slice(0,5);
+    localStorage.setItem("leaderboard",JSON.stringify(data));
 }
 
 /* CERTIFICATE */
 function showCertificate(){
+    saveScore();
+    let data=JSON.parse(localStorage.getItem("leaderboard"))||[];
+
+    let list="<h3>🏆 Leaderboard</h3>";
+    data.forEach((d,i)=>{
+        list+="<p>"+(i+1)+". "+d.name+" - ⭐ "+d.score+"</p>";
+    });
+
     document.body.innerHTML=
-    "<h1>🏅 Certificate</h1><h2>"+name+"</h2><p>Completed Math Adventure!</p><button onclick='window.print()'>Print</button>";
+    "<h1>🏅 Certificate</h1><h2>"+name+"</h2><p>Score: ⭐ "+score+"</p>"
+    +list+
+    "<button onclick='window.print()'>Print</button>";
 }
 
 /* END */
@@ -297,10 +355,12 @@ function endGame(){
     setTimeout(()=>location.reload(),2000);
 }
 
-/* POPUP */
+/* POPUP FIX */
 function showPopup(msg,type){
     let p=document.getElementById("popup");
-    p.className="popup "+type;
+    p.classList.remove("correct","wrong");
+    if(type==="correct") p.classList.add("correct");
+    if(type==="wrong") p.classList.add("wrong");
     p.innerText=msg;
     p.style.display="block";
     setTimeout(()=>p.style.display="none",1200);
