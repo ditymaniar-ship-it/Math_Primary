@@ -14,6 +14,7 @@ body {
 }
 
 body::before {
+  pointer-events: none;
   content: "+   +   +   +   +   +   +   +   +   +";
   position: fixed;
   top: 0;
@@ -93,4 +94,76 @@ correctAnswer = a+b;
 
 if(level===1){
 document.getElementById('levelTitle').innerText='Level 1: Mental Addition';
-document.getE
+document.getElementById('question').innerText=`${a} + ${b} = ?`;
+}
+
+else if(level===2){
+document.getElementById('levelTitle').innerText='Level 2: Word Problems';
+document.getElementById('question').innerText=`A library has ${a} books and buys ${b} more. Total books?`;
+}
+
+else if(level===3){
+document.getElementById('levelTitle').innerText='Level 3: Missing Number';
+document.getElementById('question').innerText=`? + ${b} = ${a+b}`;
+correctAnswer=a;
+}
+
+else{
+let wrong=a+b+Math.floor(Math.random()*50+10);
+document.getElementById('levelTitle').innerText='Level 4: Error Analysis';
+document.getElementById('question').innerText=`${a} + ${b} = ${wrong}. Correct? (yes/no)`;
+correctAnswer='no';
+}
+}
+
+function showHint(){
+document.getElementById('hintBox').innerHTML = "💡 Add from ones → tens → hundreds → thousands.";
+}
+
+function submitAnswer(){
+let userAns=document.getElementById('answer').value;
+let correct=false;
+attempts++;
+
+if(level===4) correct=(userAns.toLowerCase()==='no');
+else correct=(parseInt(userAns)===correctAnswer);
+
+if(correct){
+score+=10;
+document.getElementById('feedback').innerText='✅ Correct';
+nextQuestion();
+}
+else{
+if(attempts===1){
+document.getElementById('feedback').innerText='❌ Try Again';
+}
+else{
+if(isTeacher){
+document.getElementById('feedback').innerText='❌ Answer: '+correctAnswer;
+} else {
+document.getElementById('feedback').innerText='❌ Correct Answer: '+correctAnswer;
+}
+setTimeout(nextQuestion,2000);
+}
+}
+}
+
+function nextQuestion(){
+document.getElementById('answer').value='';
+questionCount++;
+
+if(questionCount>3){
+level++;
+questionCount=1;
+}
+
+if(level>4){
+document.getElementById('game').innerHTML=`<h2>Game Over</h2><p>Score: ${score}</p>`;
+}
+else{
+loadQuestion();
+}
+}
+</script>
+</body>
+</html>
