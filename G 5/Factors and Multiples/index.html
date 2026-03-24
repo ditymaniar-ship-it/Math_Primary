@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body { font-family: Arial; padding: 20px; }
+  .option { margin: 5px; padding: 10px; background:#eee; border:none; cursor:pointer; }
+  .option.correct { background: #a0e6a0; }
+  .option.wrong { background: #f7a0a0; }
+  .matchPair { margin: 5px 0; }
+  input[type=number], input[type=text] { padding: 5px; width: 100px; }
+  #nextBtn { margin-top: 10px; padding: 10px; display:none; }
+</style>
+</head>
+<body>
+
+<h2 id="question"></h2>
+<div id="options"></div>
+<button id="nextBtn" onclick="nextLevel()">Next</button>
+
+<script>
+let level = 1;
+let answers = [];
+let selected = [];
+let attempts = 0;
+
+function loadQ(){
+    selected = [];
+    attempts = 0;
+    document.getElementById("nextBtn").style.display = "none";
+
+    let text = "", opts = [], ans = [], qType = "mcq";
+
+    // 🟢 LEVEL 1 — MCQ (Factors)
+    if(level === 1){
+        qType = "mcq";
+        let num = Math.floor(Math.random()*10)+10;
+        text = "Select all factors of "+num;
+
+        for(let i=1;i<=12;i++){
+            opts.push(i);
+            if(num % i === 0) ans.push(i);
+        }
+    }
+
+    // 🔵 LEVEL 2 — Matching
+    else if(level === 2){
+        qType = "match";
+        let n = Math.floor(Math.random()*5)+2;
+        text = "Match multiples of "+n+" with their labels";
+
+        opts = [];
+        ans = [];
+        for(let i=1;i<=4;i++){
+            opts.push({left: n*i, right: `Multiple ${i}`});
+            ans.push({left: n*i, right: `Multiple ${i}`});
+        }
+        opts = opts.sort(()=>Math.random()-0.5);
+    }
+
+    // 🟣 LEVEL 3 — True/False
+    else if(level === 3){
+        qType = "tf";
+        let a = Math.floor(Math.random()*20)+10;
+        let b = Math.floor(Math.random()*20)+10;
+        let correctHCF = hcf(a,b);
+        let isTrue = Math.random() < 0.5;
+        let statement = isTrue ? 
+            `HCF of ${a} and ${b} is ${correctHCF}` : 
+            `HCF of ${a} and ${b} is ${correctHCF + 1}`;
+
+        text = statement;
+        ans = [isTrue ? "True" : "False"];
+        opts = ["True", "False"];
+    }
+
+    // 🟠 LEVEL 4 — Fill in the blanks
+    else if(level === 4){
+        qType = "blank";
+        let a = Math.floor(Math.random()*10)+2;
+        let b = Math.floor(Math.random()*10)+2;
+        let correctLCM = lcm(a,b);
+
+        text = `Fill in the blank: LCM of ${a} and ${b} is ___`;
+        ans = [correctLCM];
+        opts = [];
+    }
+
+    // 👑 BOSS LEVEL — Mixed
+    else {
+        qType = "boss";
+        let a = Math.floor(Math.random()*5)+2;
+        let b = Math.floor(Math.random()*5)+3;
+        let storyArr = [
+            `Two bells ring every ${a} min and ${b} min. When will they ring together?`,
+            `Two machines beep every ${a} sec and ${b} sec. When will they beep together?`,
+            `Two traffic lights change every ${a} sec and ${b} sec. When will they turn red together?`
+        ];
+        text = "👑 BOSS: " + storyArr[Math.floor(Math.random()*storyArr.length)];
+
+        const bossTypes = ["mcq","tf","blank","match"];
+        qType = bossTypes[Math.floor(Math.random()*bossTypes.length)];
+
+        let correct = lcm(a,b);
+
+        if(qType === "mcq"){
+            ans = [correct];
+            opts = [correct, correct+2, correct+4, correct-2].filter(v=>v>0).sort(()=>Math.random()-0.5);
+        } else if(qType === "tf"){
+            ans = ["True"];
+            opts = ["True","False"];
+        } else if(qType === "blank"){
+            ans = [correct];
+            opts = [];
+        } else if(qType === "match"){
+            opts = [
+                {left: correct, right: "Time they ring together"},
+                {left: correct+2, right: "Incorrect"}
+            ].sort(()=>Math.random()-0.5);
+            ans = [{left: correct, right: "Time they ring together"}];
+        }
+    }
+
+    answers = ans;
+    document.getElementById("question").innerText = text;
+    document.getElementById("options").innerHTML = "";
+
+    if(qType === "mcq" || qType === "tf"){
+        let html = "";
+        opts.forEach(o=>{
+            html += `<button class="option" onclick="selectOption(this,'${o}')">${o}</button>`;
+        });
+        document.getElementById("options").innerHTML = html;
+    } else if(qType === "blank"){
+        document.getElementById("options").innerHTML = `<input type="number" id="blankAnswer" placeholder="Enter answer"><button onclick="checkBlank()">Submit</button>`;
+    } else if(qType === "match"){
+        let html = "";
+        opts.forEach((pair,i)=>{
+            html += `<div class="matchPair" id="pair${i}"><span class="left">${pair.left}</span> <input type="text" class="rightInput" placeholder="Match"></div>`;
+        });
+        document.getElementById("options").innerHTML = html + `<button onclick="checkMatch()">Submit</button>`;
+    }
+}
+
+// MCQ / TF selection
+function selectOption(btn,val){
+    attempts++;
+    if(answers.includes(val)){
+        btn.classList.add("correct");
+        document.getElementById("nextBtn").style.display = "block";
+    } else {
+        btn.classList.add("wrong");
+        if(attempts>=2){
+            alert("Correct answer: "+answers.join(", "));
+            document.getElementById("nextBtn").style.display = "block";
+        }
+    }
+}
+
+// Blank input check
+function checkBlank(){
+    attempts++;
+    let val = document.getElementById("blankAnswer").value;
+    if(answers.includes(Number(val))){
+        alert("Correct!");
+        document.getElementById("nextBtn").style.display = "block";
+    } else {
+        alert("Wrong!");
+        if(attempts>=2) alert("Correct answer: "+answers[0]);
+    }
+}
+
+// Match input check
+function checkMatch(){
+    attempts++;
+    let pairs = document.querySelectorAll(".matchPair");
+    let correctPairs = 0;
+    pairs.forEach((p,i)=>{
+        let user = p.querySelector(".rightInput").value.trim();
+        if(user === answers[i].right) correctPairs++;
+    });
+    if(correctPairs === answers.length){
+        alert("All correct!");
+        document.getElementById("nextBtn").style.display = "block";
+    } else {
+        alert("Try again!");
+        if(attempts>=2){
+            alert("Correct answers:\n" + answers.map(a=>a.left+" → "+a.right).join("\n"));
+            document.getElementById("nextBtn").style.display = "block";
+        }
+    }
+}
+
+// Next level
+function nextLevel(){
+    if(level<5) level++;
+    else alert("You completed all levels!");
+    loadQ();
+}
+
+// Helpers
+function hcf(x,y){ while(y){let t=y;y=x%y;x=t;} return x; }
+function lcm(x,y){ let max=Math.max(x,y); while(true){ if(max%x===0 && max%y===0) return max; max++;} }
+
+loadQ();
+</script>
+
+</body>
+</html>
