@@ -9,39 +9,33 @@ body {
   font-family: Arial;
   margin: 0;
   text-align: center;
-  background: linear-gradient(#87CEEB, #fff);
+  background: linear-gradient(135deg, #a1c4fd, #c2e9fb);
   overflow:hidden;
 }
 
-/* Interactive floating bubbles */
-.bubble {
+/* Animated math background */
+.bg-symbol {
   position: absolute;
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: rgba(255,255,255,0.6);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size: 24px;
-  cursor: pointer;
-  animation: floatUp linear infinite;
+  font-size: 40px;
+  opacity: 0.15;
+  animation: float 12s linear infinite;
 }
 
-@keyframes floatUp {
-  from { transform: translateY(100vh); }
-  to { transform: translateY(-10vh); }
+@keyframes float {
+  0% { transform: translateY(100vh) rotate(0deg); }
+  100% { transform: translateY(-10vh) rotate(360deg); }
 }
 
 .container { padding: 12px; position:relative; z-index:1; }
 button { padding: 10px 16px; margin: 6px; font-size: 15px; border-radius: 10px; }
 input { padding: 10px; font-size: 15px; }
-.card { background:#fff; border-radius:12px; padding:10px; margin:8px auto; max-width:520px; box-shadow:0 2px 6px rgba(0,0,0,0.1);} 
+.card { background:#ffffffee; backdrop-filter: blur(6px); border-radius:12px; padding:10px; margin:8px auto; max-width:520px; box-shadow:0 4px 10px rgba(0,0,0,0.15);} 
 </style>
 </head>
 <body>
 
 <div class="container">
+<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..." style="width:120px;margin-bottom:5px;">
 <h1>➕ Addition Adventure</h1>
 
 <div id="start" class="card">
@@ -67,25 +61,20 @@ let attempts=0;
 let aVal=0,bVal=0;
 let questionCount=1;
 
-// create interactive bubbles
-function createBubbles(){
-for(let i=0;i<10;i++){
-let b=document.createElement("div");
-b.className="bubble";
-b.style.left=Math.random()*100+"vw";
-b.style.animationDuration=(5+Math.random()*5)+"s";
-b.innerText="+";
-
-b.onclick=()=>{
-b.innerText="✨";
-setTimeout(()=>b.innerText="+",500);
-}
-
-document.body.appendChild(b);
+// create animated background symbols
+function createBackground(){
+const symbols = ['+', '➕', '✚'];
+for(let i=0;i<20;i++){
+let el=document.createElement('div');
+el.className='bg-symbol';
+el.innerText=symbols[Math.floor(Math.random()*symbols.length)];
+el.style.left=Math.random()*100+'vw';
+el.style.animationDuration=(8+Math.random()*10)+'s';
+el.style.fontSize=(20+Math.random()*40)+'px';
+document.body.appendChild(el);
 }
 }
-
-createBubbles();
+createBackground();
 
 function startGame(){
 document.getElementById('start').style.display='none';
@@ -113,7 +102,67 @@ if(level===1){
 document.getElementById('levelTitle').innerText='Level 1';
 document.getElementById('question').innerText=`${a} + ${b} = ?`;
 }
-
 else if(level===2){
 document.getElementById('levelTitle').innerText='Level 2';
-document.getElementById('question').innerT
+document.getElementById('question').innerText=`A library has ${a} books and buys ${b} more. Total books?`;
+}
+else if(level===3){
+document.getElementById('levelTitle').innerText='Level 3';
+document.getElementById('question').innerText=`? + ${b} = ${a+b}`;
+correctAnswer=a;
+}
+else{
+let wrong=a+b+Math.floor(Math.random()*50+10);
+document.getElementById('levelTitle').innerText='Level 4';
+document.getElementById('question').innerText=`${a} + ${b} = ${wrong}. Correct? (yes/no)`;
+correctAnswer='no';
+}
+}
+
+function showHint(){
+document.getElementById('hintBox').innerText = "💡 Add from ones → tens → hundreds → thousands.";
+}
+
+function submitAnswer(){
+let userAns=document.getElementById('answer').value;
+let correct=false;
+attempts++;
+
+if(level===4) correct=(userAns.toLowerCase()==='no');
+else correct=(parseInt(userAns)===correctAnswer);
+
+if(correct){
+score+=10;
+document.getElementById('feedback').innerText='✅ Correct';
+nextQuestion();
+}
+else{
+if(attempts===1){
+document.getElementById('feedback').innerText='❌ Try Again';
+}
+else{
+document.getElementById('feedback').innerText='❌ Correct Answer: '+correctAnswer;
+setTimeout(nextQuestion,2000);
+}
+}
+}
+
+function nextQuestion(){
+document.getElementById('answer').value='';
+questionCount++;
+
+if(questionCount>3){
+level++;
+questionCount=1;
+}
+
+if(level>4){
+document.getElementById('game').innerHTML=`<h2>Game Over</h2><p>Score: ${score}</p>`;
+}
+else{
+loadQuestion();
+}
+}
+</script>
+</body>
+</html>
