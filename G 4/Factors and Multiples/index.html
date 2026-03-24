@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Factors & Multiples Adventure</title>
+<style>
+    body {
+        font-family: Arial;
+        text-align: center;
+        background: linear-gradient(135deg, #a1c4fd, #c2e9fb);
+    }
+
+    .game-box {
+        background: white;
+        padding: 20px;
+        border-radius: 15px;
+        width: 400px;
+        margin: auto;
+        margin-top: 50px;
+        box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    }
+
+    button {
+        margin: 5px;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 8px;
+        background: #4CAF50;
+        color: white;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background: #45a049;
+    }
+
+    #options button {
+        display: block;
+        width: 80%;
+        margin: 8px auto;
+        background: #2196F3;
+    }
+
+    #hint {
+        color: orange;
+        font-size: 14px;
+    }
+
+    #score {
+        font-weight: bold;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="game-box">
+
+    <h2>🎮 Factor & Multiple Adventure</h2>
+
+    <div id="startScreen">
+        <input type="text" id="playerName" placeholder="Enter your name">
+        <br><br>
+        <button onclick="startGame()">Start Game</button>
+        <br><br>
+        <button onclick="toggleTeacher()">Teacher Mode</button>
+    </div>
+
+    <div id="gameScreen" style="display:none;">
+        <p id="welcome"></p>
+        <p id="level"></p>
+        <p id="question"></p>
+
+        <div id="options"></div>
+
+        <p id="hint"></p>
+        <button onclick="showHint()">Hint</button>
+
+        <p id="score"></p>
+    </div>
+
+</div>
+
+<script>
+let name = "";
+let score = 0;
+let level = 1;
+let teacherMode = false;
+let correctAnswers = [];
+
+function startGame() {
+    name = document.getElementById("playerName").value;
+
+    if (name.trim() === "") {
+        alert("Please enter your name!");
+        return;
+    }
+
+    document.getElementById("startScreen").style.display = "none";
+    document.getElementById("gameScreen").style.display = "block";
+
+    document.getElementById("welcome").innerText = "Welcome, " + name + "!";
+    loadQuestion();
+}
+
+function toggleTeacher() {
+    teacherMode = !teacherMode;
+    alert("Teacher Mode: " + (teacherMode ? "ON" : "OFF"));
+}
+
+function loadQuestion() {
+    document.getElementById("level").innerText = "Level " + level;
+    document.getElementById("hint").innerText = "";
+
+    let q = {};
+    correctAnswers = [];
+
+    if (level === 1) {
+        let num = random(10, 30);
+        q.text = "Select factors of " + num;
+
+        let options = [];
+        for (let i = 1; i <= 10; i++) {
+            options.push(i);
+            if (num % i === 0) correctAnswers.push(i);
+        }
+        q.options = shuffle(options);
+
+        q.hint = "Factors divide the number exactly (no remainder)";
+    }
+
+    else if (level === 2) {
+        let num = random(2, 10);
+        q.text = "Select multiples of " + num;
+
+        let options = [];
+        for (let i = 1; i <= 6; i++) {
+            let val = num * i;
+            options.push(val);
+            correctAnswers.push(val);
+        }
+        options.push(random(11, 40));
+        options.push(random(11, 40));
+
+        q.options = shuffle(options);
+        q.hint = "Multiples are found by multiplying the number";
+    }
+
+    else {
+        q.text = "Game Over! Final Score: " + score;
+        document.getElementById("options").innerHTML = "";
+        return;
+    }
+
+    document.getElementById("question").innerText = q.text;
+
+    let optionsHTML = "";
+    q.options.forEach(opt => {
+        optionsHTML += `<button onclick="checkAnswer(${opt})">${opt}</button>`;
+    });
+
+    document.getElementById("options").innerHTML = optionsHTML;
+
+    window.currentHint = q.hint;
+
+    if (teacherMode) {
+        document.getElementById("hint").innerText = "Answer: " + correctAnswers.join(", ");
+    }
+
+    document.getElementById("score").innerText = "Score: " + score;
+}
+
+function checkAnswer(selected) {
+    if (correctAnswers.includes(selected)) {
+        score += 10;
+        alert("Correct!");
+    } else {
+        alert("Try again!");
+    }
+
+    level++;
+    loadQuestion();
+}
+
+function showHint() {
+    document.getElementById("hint").innerText = currentHint;
+}
+
+function random(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function shuffle(array) {
+    return array.sort(() => Math.random() - 0.5);
+}
+</script>
+
+</body>
+</html>
