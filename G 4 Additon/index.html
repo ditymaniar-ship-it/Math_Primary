@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Addition Quiz - Grade 4</title>
+<style>
+body {
+  font-family: Arial;
+  margin: 0;
+  text-align: center;
+  background: linear-gradient(#87CEEB, #fff);
+  overflow-x:hidden;
+}
+
+body::before {
+  content: "+   +   +   +   +   +   +   +   +   +";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 300%;
+  height: 100%;
+  font-size: 80px;
+  opacity: 0.08;
+  white-space: nowrap;
+  animation: float 25s linear infinite;
+}
+
+@keyframes float {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+.container { padding: 12px; }
+button { padding: 10px 16px; margin: 6px; font-size: 15px; border-radius: 10px; }
+input { padding: 10px; font-size: 15px; }
+.card { background:#fff; border-radius:12px; padding:10px; margin:8px auto; max-width:520px; box-shadow:0 2px 6px rgba(0,0,0,0.1);} 
+.step { text-align:left; margin-top:10px; font-size:14px; }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>➕ Addition Adventure</h1>
+
+<div id="start" class="card">
+<input id="playerName" placeholder="Enter student name"><br>
+<label>
+<input type="checkbox" id="teacherMode"> Teacher Mode
+</label><br>
+<button onclick="startGame()">Start Game</button>
+</div>
+
+<div id="game" class="card" style="display:none;">
+<h3 id="levelTitle"></h3>
+<p>Question <span id="qNum">1</span> of 3</p>
+<p id="question"></p>
+<input id="answer"><br>
+<button onclick="submitAnswer()">Submit</button>
+<button onclick="showHint()">Hint</button>
+<p id="feedback"></p>
+<div id="hintBox" class="step"></div>
+</div>
+
+<script>
+let level=1, score=0, correctAnswer=0;
+let attempts=0;
+let aVal=0,bVal=0;
+let questionCount=1;
+let isTeacher=false;
+
+function startGame(){
+isTeacher = document.getElementById('teacherMode').checked;
+document.getElementById('start').style.display='none';
+document.getElementById('game').style.display='block';
+loadQuestion();
+}
+
+function getNumbers(){
+let a = Math.floor(Math.random()*9000)+1000;
+let b = Math.floor(Math.random()*9000)+1000;
+return {a,b};
+}
+
+function loadQuestion(){
+attempts=0;
+document.getElementById('feedback').innerText='';
+document.getElementById('hintBox').innerHTML='';
+document.getElementById('qNum').innerText=questionCount;
+
+let {a,b}=getNumbers();
+aVal=a; bVal=b;
+correctAnswer = a+b;
+
+if(level===1){
+document.getElementById('levelTitle').innerText='Level 1: Mental Addition';
+document.getE
