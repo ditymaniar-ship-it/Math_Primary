@@ -14,7 +14,6 @@ body {
 }
 
 body::before {
-  pointer-events: none;
   content: "+   +   +   +   +   +   +   +   +   +";
   position: fixed;
   top: 0;
@@ -25,6 +24,13 @@ body::before {
   opacity: 0.08;
   white-space: nowrap;
   animation: float 25s linear infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.container, .card {
+  position: relative;
+  z-index: 1;
 }
 
 @keyframes float {
