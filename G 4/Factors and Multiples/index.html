@@ -16,7 +16,6 @@ body{
     width:450px;
     margin:40px auto;
     border-radius:15px;
-    position:relative;
 }
 
 input{padding:10px;width:70%;}
@@ -48,7 +47,7 @@ button{padding:10px;margin:8px;cursor:pointer;}
     border-radius:10px;
 }
 
-/* POPUP FIX (no blocking clicks) */
+/* POPUP CENTER */
 .popup{
     position:fixed;
     top:50%;
@@ -60,7 +59,7 @@ button{padding:10px;margin:8px;cursor:pointer;}
     color:white;
     font-size:18px;
     z-index:10;
-    pointer-events:none; /* IMPORTANT FIX */
+    pointer-events:none;
 }
 .popup.correct{background:green;}
 .popup.wrong{background:red;}
@@ -74,21 +73,24 @@ button{padding:10px;margin:8px;cursor:pointer;}
 
 <h2>🎮 Math Adventure</h2>
 
+<!-- START -->
 <div id="startScreen">
 <input id="playerName" placeholder="Enter name">
 <br>
 <button onclick="startGame()">Start</button>
 </div>
 
+<!-- LEVEL SELECT -->
 <div id="levelScreen" style="display:none;">
 <h2>Choose Level</h2>
-<button onclick="startLevel(1)">Level 1</button><br>
-<button id="lvl2" class="locked" onclick="startLevel(2)">Level 2</button><br>
-<button id="lvl3" class="locked" onclick="startLevel(3)">Level 3</button><br>
-<button id="lvl4" class="locked" onclick="startLevel(4)">Level 4</button><br>
-<button id="boss" class="locked" onclick="startLevel(5)">Boss</button>
+<button onclick="startLevel(1)">Level 1 (Factors)</button><br>
+<button id="lvl2" class="locked" onclick="startLevel(2)">Level 2 (Multiples)</button><br>
+<button id="lvl3" class="locked" onclick="startLevel(3)">Level 3 (HCF)</button><br>
+<button id="lvl4" class="locked" onclick="startLevel(4)">Level 4 (LCM)</button><br>
+<button id="boss" class="locked" onclick="startLevel(5)">👑 Boss</button>
 </div>
 
+<!-- GAME -->
 <div id="gameScreen" style="display:none;">
 <div id="progressBar"><div id="progressFill"></div></div>
 <p id="status"></p>
@@ -104,6 +106,7 @@ button{padding:10px;margin:8px;cursor:pointer;}
 <div id="popup" class="popup"></div>
 
 <script>
+
 let level=1,unlocked=1,qIndex=0;
 let answers=[],selected=[];
 let attempts=0;
@@ -121,7 +124,8 @@ function startGame(){
 function startLevel(l){
     if(l>unlocked){showPopup("Locked","wrong");return;}
 
-    level=l;qIndex=0;
+    level=l;
+    qIndex=0;
     progressFill.style.width="0%";
 
     levelScreen.style.display="none";
@@ -130,7 +134,7 @@ function startLevel(l){
     loadQ();
 }
 
-/* LOAD */
+/* LOAD QUESTIONS */
 function loadQ(){
     selected=[];
     attempts=0;
@@ -138,31 +142,98 @@ function loadQ(){
 
     let text="",opts=[],ans=[];
 
+    // LEVEL 1 FACTORS
     if(level===1){
-        let num=12;
+        let num=Math.floor(Math.random()*10)+10;
         text="Select all factors of "+num;
+
         for(let i=1;i<=12;i++){
             opts.push(i);
             if(num%i===0) ans.push(i);
         }
     }
 
+    // LEVEL 2 MULTIPLES
     else if(level===2){
-        let n=3;
+        let n=Math.floor(Math.random()*5)+2;
         text="Select multiples of "+n;
 
-        opts=[3,6,9,12,7,10,14,11];
-        ans=[3,6,9,12];
+        for(let i=1;i<=4;i++){
+            let v=n*i;
+            opts.push(v);
+            ans.push(v);
+        }
+
+        while(opts.length<8){
+            let wrong=Math.floor(Math.random()*30)+2;
+            if(wrong%n!==0 && !opts.includes(wrong)){
+                opts.push(wrong);
+            }
+        }
     }
 
+    // LEVEL 3 HCF
+    else if(level===3){
+        let a=12+Math.floor(Math.random()*10);
+        let b=18+Math.floor(Math.random()*10);
+
+        text="Find HCF of "+a+" & "+b;
+
+        function hcf(x,y){while(y){let t=y;y=x%y;x=t;}return x;}
+        let c=hcf(a,b);
+
+        ans=[c];
+        opts=[c,c+1,c+2,c-1].filter(v=>v>0);
+    }
+
+    // LEVEL 4 LCM
+    else if(level===4){
+        let a=3+Math.floor(Math.random()*6);
+        let b=4+Math.floor(Math.random()*6);
+
+        text="Find LCM of "+a+" & "+b;
+
+        function lcm(x,y){
+            let m=Math.max(x,y);
+            while(true){
+                if(m%x===0 && m%y===0) return m;
+                m++;
+            }
+        }
+
+        let c=lcm(a,b);
+
+        ans=[c];
+        opts=[c,c+2,c+4,c-2].filter(v=>v>0);
+    }
+
+    // 👑 BOSS STORY MODE
     else{
-        text="Find LCM of 3 & 4";
-        ans=[12];
-        opts=[12,14,10,8];
+        function lcm(x,y){
+            let m=Math.max(x,y);
+            while(true){
+                if(m%x===0 && m%y===0) return m;
+                m++;
+            }
+        }
+
+        let stories=[
+            {q:"👑 Lights blink every 3 & 4 mins. When together?", a:lcm(3,4)},
+            {q:"👑 Buses arrive every 2 & 5 mins. When together?", a:lcm(2,5)},
+            {q:"👑 Students clap every 4 & 6 sec. When together?", a:lcm(4,6)}
+        ];
+
+        let s=stories[Math.floor(Math.random()*stories.length)];
+
+        text=s.q;
+        ans=[s.a];
+        opts=[s.a,s.a+2,s.a+4,s.a-2].filter(v=>v>0);
     }
 
     answers=ans;
     question.innerText=text;
+
+    opts.sort(()=>Math.random()-0.5);
 
     let html="";
     opts.forEach(o=>{
@@ -170,11 +241,17 @@ function loadQ(){
     });
 
     options.innerHTML=html;
+    updateStatus();
 }
 
-/* SELECT FIXED */
+/* STATUS */
+function updateStatus(){
+    status.innerText="Level "+level+" | Q"+(qIndex+1)+"/3";
+}
+
+/* SELECT */
 function selectOption(btn,val){
-    if(btn.disabled) return; // prevent if locked
+    if(btn.disabled) return;
 
     if(selected.includes(val)){
         selected=selected.filter(v=>v!==val);
@@ -191,7 +268,14 @@ function checkAnswer(){
                   selected.every(s=>answers.includes(s));
 
     if(correct){
-        showPopup("Correct","correct");
+        showPopup("Correct 🎉","correct");
+
+        // 👑 BOSS WIN
+        if(level===5){
+            showPopup("🏆 CONGRATULATIONS! You defeated the Boss! 🎉","correct");
+            launchConfetti();
+        }
+
         nextBtn.style.display="inline";
     }
     else{
@@ -203,11 +287,8 @@ function checkAnswer(){
             document.querySelectorAll(".option").forEach(btn=>{
                 let val=parseInt(btn.innerText);
 
-                if(answers.includes(val)){
-                    btn.style.background="green";
-                }else if(selected.includes(val)){
-                    btn.style.background="red";
-                }
+                if(answers.includes(val)) btn.style.background="green";
+                else if(selected.includes(val)) btn.style.background="red";
 
                 btn.disabled=true;
             });
@@ -224,9 +305,17 @@ function checkAnswer(){
 function nextQuestion(){
     qIndex++;
 
+    let percent=(qIndex/3)*100;
+    progressFill.style.width=percent+"%";
+
     if(qIndex===3){
         unlocked++;
-        lvl2.classList.remove("locked");
+
+        if(unlocked>=2) lvl2.classList.remove("locked");
+        if(unlocked>=3) lvl3.classList.remove("locked");
+        if(unlocked>=4) lvl4.classList.remove("locked");
+        if(unlocked>=5) boss.classList.remove("locked");
+
         showPopup("Level Complete","correct");
 
         gameScreen.style.display="none";
@@ -242,8 +331,32 @@ function showPopup(msg,type){
     p.classList.add(type);
     p.innerText=msg;
     p.style.display="block";
-    setTimeout(()=>p.style.display="none",1000);
+    setTimeout(()=>p.style.display="none",1200);
 }
+
+/* CONFETTI */
+function launchConfetti(){
+    for(let i=0;i<50;i++){
+        let c=document.createElement("div");
+        c.style.position="fixed";
+        c.style.width="8px";
+        c.style.height="8px";
+        c.style.background="red";
+        c.style.left=Math.random()*100+"%";
+        c.style.top="-10px";
+
+        document.body.appendChild(c);
+
+        let fall=setInterval(()=>{
+            c.style.top=parseInt(c.style.top)+5+"px";
+            if(parseInt(c.style.top)>window.innerHeight){
+                clearInterval(fall);
+                c.remove();
+            }
+        },30);
+    }
+}
+
 </script>
 
 </body>
