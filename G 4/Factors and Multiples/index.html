@@ -4,38 +4,34 @@
 <title>Math Adventure</title>
 
 <style>
-body {
-    font-family: Arial;
-    text-align: center;
-    background: linear-gradient(#a1c4fd,#fbc2eb);
+body{
+    font-family:Arial;
+    text-align:center;
+    background:linear-gradient(#a1c4fd,#fbc2eb);
 }
 
-/* GAME BOX */
-.game-box {
+.game-box{
     background:white;
     padding:20px;
+    width:420px;
+    margin:40px auto;
     border-radius:15px;
-    width:400px;
-    margin:50px auto;
 }
 
-/* INPUT FIX */
-input {
-    padding:12px;
-    width:80%;
-    font-size:16px;
-    margin:10px;
+/* INPUT SAFE */
+input{
+    padding:10px;
+    width:70%;
 }
 
-/* BUTTONS */
-button {
-    padding:10px 15px;
-    margin:8px;
+/* BUTTON */
+button{
+    padding:10px;
+    margin:6px;
     cursor:pointer;
 }
 
-/* OPTIONS */
-.option {
+.option{
     display:block;
     width:80%;
     margin:8px auto;
@@ -46,9 +42,10 @@ button {
 .selected{background:orange;}
 .correct{background:green;}
 .wrong{background:red;}
+.locked{background:grey;}
 
 /* POPUP CENTER */
-.popup {
+.popup{
     position:fixed;
     top:50%;
     left:50%;
@@ -56,17 +53,16 @@ button {
     background:black;
     color:white;
     padding:20px;
-    border-radius:10px;
     display:none;
 }
 
 /* SHAKE */
-@keyframes shake {
-    0%{transform:translate(0,0);}
-    25%{transform:translate(-5px,5px);}
-    50%{transform:translate(5px,-5px);}
-    75%{transform:translate(-5px,-5px);}
-    100%{transform:translate(0,0);}
+@keyframes shake{
+0%{transform:translate(0,0);}
+25%{transform:translate(-5px,5px);}
+50%{transform:translate(5px,-5px);}
+75%{transform:translate(-5px,-5px);}
+100%{transform:translate(0,0);}
 }
 .shake{animation:shake 0.3s;}
 </style>
@@ -80,13 +76,23 @@ button {
 
 <!-- START -->
 <div id="startScreen">
-<input id="playerName" placeholder="Enter your name">
+<input id="playerName" placeholder="Enter name" autofocus>
 <br>
 <button onclick="startGame()">Start</button>
 </div>
 
+<!-- LEVELS -->
+<div id="levelScreen" style="display:none;">
+<h3>Select Level</h3>
+<button onclick="startLevel(1)">Level 1</button>
+<button id="lvl2" class="locked" onclick="startLevel(2)">Level 2 🔒</button>
+<button id="lvl3" class="locked" onclick="startLevel(3)">Level 3 🔒</button>
+<button id="lvl4" class="locked" onclick="startLevel(4)">Boss 👑 🔒</button>
+</div>
+
 <!-- GAME -->
 <div id="gameScreen" style="display:none;">
+<p id="info"></p>
 <p id="question"></p>
 <div id="options"></div>
 
@@ -99,47 +105,63 @@ button {
 <div id="popup" class="popup"></div>
 
 <script>
-let name="",answers=[],selected=[],qIndex=0;
+let name="",level=1,unlocked=1,qIndex=0,answers=[],selected=[];
 
-/* 🔥 FORCE FOCUS AFTER PAGE LOAD */
-window.onload = function(){
-    document.getElementById("playerName").focus();
-};
+/* FIX INPUT */
+window.onload=()=>document.getElementById("playerName").focus();
 
-/* ENTER KEY SUPPORT */
-document.getElementById("playerName").addEventListener("keydown",function(e){
-    if(e.key==="Enter"){startGame();}
+/* ENTER KEY */
+document.getElementById("playerName").addEventListener("keydown",e=>{
+    if(e.key==="Enter")startGame();
 });
 
-/* START GAME */
+/* START */
 function startGame(){
-    name = document.getElementById("playerName").value.trim();
-
-    if(name===""){
-        showPopup("Enter your name!");
-        return;
-    }
+    name=document.getElementById("playerName").value.trim();
+    if(name===""){showPopup("Enter name");return;}
 
     document.getElementById("startScreen").style.display="none";
-    document.getElementById("gameScreen").style.display="block";
-
-    loadQuestion();
+    document.getElementById("levelScreen").style.display="block";
 }
 
-/* LOAD QUESTION */
-function loadQuestion(){
+/* LEVEL */
+function startLevel(l){
+    if(l>unlocked)return;
+    level=l;
+    qIndex=0;
+
+    document.getElementById("levelScreen").style.display="none";
+    document.getElementById("gameScreen").style.display="block";
+
+    loadQ();
+}
+
+/* LOAD */
+function loadQ(){
     selected=[];
     document.getElementById("nextBtn").style.display="none";
 
-    let num = Math.floor(Math.random()*10)+10;
-    let text = "Select factors of "+num;
+    let num=Math.floor(Math.random()*10)+10;
+    let text="",opts=[],ans=[];
 
-    let opts=[];
-    let ans=[];
-
-    for(let i=1;i<=10;i++){
-        opts.push(i);
-        if(num%i===0) ans.push(i);
+    if(level===1){
+        text="Factors of "+num;
+        for(let i=1;i<=10;i++){opts.push(i);if(num%i===0)ans.push(i);}
+    }
+    else if(level===2){
+        let n=Math.floor(Math.random()*5)+2;
+        text="Multiples of "+n;
+        for(let i=1;i<=5;i++){let v=n*i;opts.push(v);ans.push(v);}
+    }
+    else if(level===3){
+        let a=12,b=18;
+        text="Common factors of "+a+" & "+b;
+        for(let i=1;i<=10;i++){opts.push(i);if(a%i===0&&b%i===0)ans.push(i);}
+    }
+    else{
+        let t=24;
+        text="Share "+t+" chocolates equally. Friends?";
+        for(let i=1;i<=10;i++){opts.push(i);if(t%i===0)ans.push(i);}
     }
 
     answers=ans;
@@ -150,7 +172,6 @@ function loadQuestion(){
     opts.forEach(o=>{
         html+=`<button class="option" onclick="selectOption(this,${o})">${o}</button>`;
     });
-
     document.getElementById("options").innerHTML=html;
 }
 
@@ -167,23 +188,24 @@ function selectOption(btn,val){
 
 /* CHECK */
 function checkAnswer(){
-    let correct = answers.every(a=>selected.includes(a)) &&
-                  selected.every(s=>answers.includes(s));
+    let correct=answers.every(a=>selected.includes(a)) &&
+                selected.every(s=>answers.includes(s));
 
     if(correct){
         showPopup("Correct!");
         document.getElementById("nextBtn").style.display="inline";
-    } else {
-        showPopup("Try Again!");
+    }
+    else{
+        showPopup("Try Again");
 
         document.querySelector(".game-box").classList.add("shake");
 
         let btns=document.querySelectorAll(".option");
 
-        btns.forEach(btn=>{
-            let v=Number(btn.innerText);
-            if(answers.includes(v)) btn.classList.add("correct");
-            else if(selected.includes(v)) btn.classList.add("wrong");
+        btns.forEach(b=>{
+            let v=Number(b.innerText);
+            if(answers.includes(v))b.classList.add("correct");
+            else if(selected.includes(v))b.classList.add("wrong");
         });
 
         setTimeout(()=>{
@@ -196,7 +218,18 @@ function checkAnswer(){
 
 /* NEXT */
 function nextQuestion(){
-    loadQuestion();
+    qIndex++;
+    if(qIndex===3){
+        unlocked++;
+        if(unlocked===2)lvl2.classList.remove("locked");
+        if(unlocked===3)lvl3.classList.remove("locked");
+        if(unlocked===4)lvl4.classList.remove("locked");
+
+        showPopup("Level Complete");
+
+        document.getElementById("gameScreen").style.display="none";
+        document.getElementById("levelScreen").style.display="block";
+    } else loadQ();
 }
 
 /* POPUP */
@@ -204,7 +237,6 @@ function showPopup(msg){
     let p=document.getElementById("popup");
     p.innerText=msg;
     p.style.display="block";
-
     setTimeout(()=>p.style.display="none",1000);
 }
 </script>
