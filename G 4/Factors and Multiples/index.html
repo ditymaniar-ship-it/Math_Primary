@@ -102,7 +102,6 @@ button{padding:10px;margin:8px;cursor:pointer;}
 
 <!-- GAME -->
 <div id="gameScreen" style="display:none;">
-
 <div id="progressBar"><div id="progressFill"></div></div>
 <p id="stars">⭐ 0</p>
 <p id="status"></p>
@@ -158,28 +157,43 @@ function loadQ(){
 
     let text="",opts=[],ans=[];
 
+    // LEVEL 1 - FACTORS
     if(level===1){
         let num=Math.floor(Math.random()*10)+10;
         text="Select all factors of "+num;
+
         for(let i=1;i<=12;i++){
             opts.push(i);
             if(num%i===0) ans.push(i);
         }
     }
 
+    // LEVEL 2 - MULTIPLES (FIXED WITH WRONG OPTIONS)
     else if(level===2){
         let n=Math.floor(Math.random()*5)+2;
         text="Select multiples of "+n;
-        for(let i=1;i<=6;i++){
-            let v=n*i;
-            opts.push(v); ans.push(v);
+
+        // correct
+        for(let i=1;i<=4;i++){
+            let val=n*i;
+            opts.push(val);
+            ans.push(val);
         }
-        opts.push(n*6+1,n*7+2);
+
+        // wrong options
+        while(opts.length<8){
+            let wrong=Math.floor(Math.random()*30)+2;
+            if(wrong % n !== 0 && !opts.includes(wrong)){
+                opts.push(wrong);
+            }
+        }
     }
 
+    // LEVEL 3 - HCF
     else if(level===3){
         let a=12+Math.floor(Math.random()*10);
         let b=18+Math.floor(Math.random()*10);
+
         text="Find HCF of "+a+" & "+b;
 
         function hcf(x,y){while(y){let t=y;y=x%y;x=t;}return x;}
@@ -189,9 +203,11 @@ function loadQ(){
         opts=[c,c+1,c+2,c-1].filter(v=>v>0);
     }
 
+    // LEVEL 4 - LCM
     else if(level===4){
         let a=3+Math.floor(Math.random()*6);
         let b=4+Math.floor(Math.random()*6);
+
         text="Find LCM of "+a+" & "+b;
 
         function lcm(x,y){let m=Math.max(x,y);while(true){if(m%x===0&&m%y===0)return m;m++;}}
@@ -201,6 +217,7 @@ function loadQ(){
         opts=[c,c+2,c+4,c-2].filter(v=>v>0);
     }
 
+    // BOSS LEVEL - WORD PROBLEM
     else{
         let a=2+Math.floor(Math.random()*5);
         let b=3+Math.floor(Math.random()*5);
