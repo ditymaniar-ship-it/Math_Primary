@@ -31,8 +31,8 @@ body {
 button {
     padding: 12px;
     margin: 8px;
-    border: none;
     border-radius: 10px;
+    border: none;
     font-size: 16px;
     cursor: pointer;
 }
@@ -51,6 +51,29 @@ button {
 
 #nextBtn { background: #2196F3; color: white; }
 .locked { background: grey; }
+
+.popup {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) scale(0.8);
+    padding: 15px 25px;
+    border-radius: 10px;
+    font-size: 18px;
+    color: white;
+    opacity: 0;
+    z-index: 1000;
+    transition: all 0.4s ease;
+}
+
+.popup.show {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+}
+
+.popup.correct { background: #2ecc71; }
+.popup.wrong { background: #e74c3c; }
+.popup.boss { background: purple; }
 
 </style>
 </head>
@@ -71,6 +94,7 @@ button {
 <button onclick="startLevel(1)" id="lvl1">Level 1</button>
 <button onclick="startLevel(2)" id="lvl2" class="locked">Level 2 🔒</button>
 <button onclick="startLevel(3)" id="lvl3" class="locked">Level 3 🔒</button>
+<button onclick="startLevel(4)" id="lvl4" class="locked">Boss Level 👑 🔒</button>
 </div>
 
 <div id="gameScreen" style="display:none;">
@@ -87,7 +111,9 @@ button {
 
 </div>
 
-<!-- SOUND EFFECTS -->
+<div id="popup" class="popup"></div>
+
+<!-- SOUND -->
 <audio id="correctSound" src="https://www.soundjay.com/buttons/sounds/button-3.mp3"></audio>
 <audio id="wrongSound" src="https://www.soundjay.com/buttons/sounds/button-10.mp3"></audio>
 <audio id="levelSound" src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3"></audio>
@@ -99,7 +125,7 @@ let unlockedLevel=1;
 
 function startGame(){
     name=document.getElementById("playerName").value;
-    if(name===""){alert("Enter name!");return;}
+    if(name===""){showPopup("Enter your name!", "wrong"); return;}
 
     document.getElementById("startScreen").style.display="none";
     document.getElementById("levelScreen").style.display="block";
@@ -116,6 +142,10 @@ function startLevel(lvl){
     document.getElementById("levelScreen").style.display="none";
     document.getElementById("gameScreen").style.display="block";
 
+    if(level===4){
+        showPopup("⚠ FINAL BOSS LEVEL!", "boss");
+    }
+
     loadQuestion();
 }
 
@@ -124,10 +154,16 @@ function loadQuestion(){
     document.getElementById("nextBtn").style.display="none";
 
     document.getElementById("info").innerText =
-        "👤 "+name+" | ❤️ "+lives+" | Level "+level+" | Q "+(qIndex+1)+"/3";
+        "👤 "+name+" | ❤️ "+lives+" | Level "+level+" | Q "+(qIndex+1)+"/3 | ⭐ "+score;
 
     let q=generateQuestion();
     document.getElementById("question").innerText=q.text;
+
+    if(level===4){
+        document.getElementById("question").style.color="red";
+    } else {
+        document.getElementById("question").style.color="black";
+    }
 
     let html="";
     q.options.forEach(opt=>{
@@ -152,14 +188,26 @@ function checkAnswer(){
     let allCorrect=currentAnswers.every(a=>selected.includes(a));
     let noExtra=selected.every(s=>currentAnswers.includes(s));
 
+    let buttons=document.querySelectorAll(".option");
+
+    buttons.forEach(btn=>{
+        let val=parseInt(btn.innerText);
+        if(currentAnswers.includes(val)){
+            btn.classList.add("correct");
+        } else if(selected.includes(val)){
+            btn.classList.add("wrong");
+        }
+    });
+
     if(allCorrect && noExtra){
         document.getElementById("correctSound").play();
         score+=10;
+        showPopup("🎉 Correct!", "correct");
         document.getElementById("nextBtn").style.display="inline";
     } else {
         document.getElementById("wrongSound").play();
         lives--;
-        alert("❌ Try again!");
+        showPopup("❌ Try Again!", "wrong");
         if(lives===0) endGame();
     }
 }
@@ -186,8 +234,12 @@ function unlockNextLevel(){
         unlockedLevel=3;
         document.getElementById("lvl3").classList.remove("locked");
     }
+    if(level===3){
+        unlockedLevel=4;
+        document.getElementById("lvl4").classList.remove("locked");
+    }
 
-    alert("🎉 Level Complete! New Level Unlocked!");
+    showPopup("🎉 Level Complete!", "correct");
 
     document.getElementById("gameScreen").style.display="none";
     document.getElementById("levelScreen").style.display="block";
@@ -196,6 +248,14 @@ function unlockNextLevel(){
 function endGame(){
     document.getElementById("gameScreen").innerHTML=
     "<h2>💀 Game Over</h2><p>Score: "+score+"</p><button onclick='location.reload()'>Restart</button>";
+}
+
+function showPopup(msg,type){
+    let popup=document.getElementById("popup");
+    popup.innerText=msg;
+    popup.className="popup show "+type;
+
+    setTimeout(()=>{popup.className="popup";},1500);
 }
 
 function generateQuestion(){
@@ -227,6 +287,39 @@ function generateQuestion(){
         for(let i=1;i<=10;i++){
             options.push(i);
             if(a%i===0 && b%i===0) answers.push(i);
+        }
+    }
+
+    else if(level===4){
+        let type=random(1,3);
+
+        if(type===1){
+            let total=random(20,40);
+            text="Riya has "+total+" chocolates. She wants to share equally. Select number of friends.";
+            for(let i=1;i<=10;i++){
+                options.push(i);
+                if(total%i===0) answers.push(i);
+            }
+        }
+
+        else if(type===2){
+            let pack=random(2,6);
+            text="Boxes have "+pack+" pencils. Select possible total pencils.";
+            for(let i=1;i<=5;i++){
+                let val=pack*i;
+                options.push(val);
+                answers.push(val);
+            }
+            options.push(random(11,40));
+        }
+
+        else{
+            let a=random(12,24), b=random(12,24);
+            text="Ribbons "+a+" cm & "+b+" cm cut equally. Select lengths.";
+            for(let i=1;i<=10;i++){
+                options.push(i);
+                if(a%i===0 && b%i===0) answers.push(i);
+            }
         }
     }
 
