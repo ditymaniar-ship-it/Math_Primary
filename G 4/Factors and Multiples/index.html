@@ -32,6 +32,7 @@ input {
     margin:10px;
     border-radius:8px;
     border:1px solid #ccc;
+    width:70%;
 }
 
 button {
@@ -88,10 +89,14 @@ button {
     top:0;
     left:0;
     opacity:0;
+    pointer-events:none;  /* 🔥 FIX */
     transition:0.3s;
     z-index:999;
 }
-.overlay.show{opacity:1;}
+.overlay.show{
+    opacity:1;
+    pointer-events:auto;
+}
 
 @keyframes shake{
     0%{transform:translate(0,0);}
@@ -126,7 +131,7 @@ button {
 <h2>🎮 Math Adventure</h2>
 
 <div id="startScreen">
-<input type="text" id="playerName" placeholder="Enter your name"><br>
+<input type="text" id="playerName" placeholder="Enter your name" autofocus><br>
 <button onclick="startGame()">Start</button>
 </div>
 
@@ -156,7 +161,6 @@ button {
 <button onclick="checkAnswer()">Submit</button>
 <button onclick="nextQuestion()" id="nextBtn" style="display:none;">Next</button>
 
-<p id="score"></p>
 </div>
 
 </div>
@@ -172,6 +176,18 @@ button {
 <script>
 let name="",avatar="😀",level=1,qIndex=0,score=0,lives=3;
 let unlockedLevel=1,currentAnswers=[],selected=[];
+
+/* 🔥 AUTO FOCUS FIX */
+window.onload = function(){
+    document.getElementById("playerName").focus();
+};
+
+/* 🔥 ENTER KEY SUPPORT */
+document.addEventListener("DOMContentLoaded", function(){
+    document.getElementById("playerName").addEventListener("keypress", function(e){
+        if(e.key==="Enter"){ startGame(); }
+    });
+});
 
 function startGame(){
     name=document.getElementById("playerName").value.trim();
