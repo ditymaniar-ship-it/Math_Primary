@@ -16,22 +16,31 @@ body{
     width:520px;
     margin:40px auto;
     border-radius:15px;
+    position:relative;
+    z-index:1;
 }
 
-/* OPTIONS */
+/* OPTIONS FIXED */
 .option{
     display:block;
     width:80%;
-    margin:8px auto;
+    margin:10px auto;
     background:#4CAF50;
     color:white;
-    padding:10px;
+    padding:12px;
     border:none;
-    border-radius:8px;
+    border-radius:10px;
     cursor:pointer;
+    font-size:16px;
+    position:relative;
+    z-index:2;
 }
+
 .option:hover{background:#45a049;}
-.selected{background:orange;}
+
+.selected{
+    background:orange !important;
+}
 
 /* LEVEL CARDS */
 .level-container{
@@ -45,15 +54,10 @@ body{
     padding:20px;
     border-radius:15px;
     cursor:pointer;
-    transition:0.3s;
 }
 
-.level-card:hover{transform:scale(1.05);}
-
-/* LOCKED FIX */
 .level-card.locked{
     background:grey;
-    color:white;
     opacity:0.6;
     cursor:not-allowed;
 }
@@ -77,6 +81,7 @@ body{
 }
 .correct{background:green;}
 .wrong{background:red;}
+
 </style>
 </head>
 
@@ -98,27 +103,11 @@ body{
 <h3>🌟 Choose Your Mission</h3>
 
 <div class="level-container">
-
-<div class="level-card" onclick="startLevel(1)">
-Level 1<br>Factors
-</div>
-
-<div id="lvl2" class="level-card locked" onclick="startLevel(2)">
-Level 2<br>Multiples
-</div>
-
-<div id="lvl3" class="level-card locked" onclick="startLevel(3)">
-Level 3<br>HCF
-</div>
-
-<div id="lvl4" class="level-card locked" onclick="startLevel(4)">
-Level 4<br>LCM
-</div>
-
-<div id="boss" class="level-card boss locked" onclick="startLevel(5)">
-👑 Boss Level
-</div>
-
+<div class="level-card" onclick="startLevel(1)">Level 1<br>Factors</div>
+<div id="lvl2" class="level-card locked" onclick="startLevel(2)">Level 2<br>Multiples</div>
+<div id="lvl3" class="level-card locked" onclick="startLevel(3)">Level 3<br>HCF</div>
+<div id="lvl4" class="level-card locked" onclick="startLevel(4)">Level 4<br>LCM</div>
+<div id="boss" class="level-card boss locked" onclick="startLevel(5)">👑 Boss</div>
 </div>
 </div>
 
@@ -148,16 +137,14 @@ function startGame(){
         showPopup("Enter name","wrong");
         return;
     }
-
     document.getElementById("startScreen").style.display="none";
     document.getElementById("levelScreen").style.display="block";
 }
 
 /* LEVEL */
 function startLevel(l){
-
     if(l>unlocked){
-        showPopup("🔒 Level Locked","wrong");
+        showPopup("Locked","wrong");
         return;
     }
 
@@ -191,10 +178,12 @@ function loadQ(){
             let btn=document.createElement("button");
             btn.className="option";
             btn.innerText=o;
-            btn.onclick=function(){
+
+            btn.addEventListener("click", function(){
                 userAns=o;
                 highlight(btn);
-            };
+            });
+
             area.appendChild(btn);
         });
     }
@@ -209,10 +198,12 @@ function loadQ(){
             let btn=document.createElement("button");
             btn.className="option";
             btn.innerText=o;
-            btn.onclick=function(){
+
+            btn.addEventListener("click", function(){
                 userAns=o;
                 highlight(btn);
-            };
+            });
+
             area.appendChild(btn);
         });
     }
@@ -235,10 +226,12 @@ function loadQ(){
             let btn=document.createElement("button");
             btn.className="option";
             btn.innerText=v;
-            btn.onclick=function(){
+
+            btn.addEventListener("click", function(){
                 userAns=(v==="True");
                 highlight(btn);
-            };
+            });
+
             area.appendChild(btn);
         });
     }
@@ -253,10 +246,12 @@ function loadQ(){
             let btn=document.createElement("button");
             btn.className="option";
             btn.innerText=o;
-            btn.onclick=function(){
+
+            btn.addEventListener("click", function(){
                 userAns=o;
                 highlight(btn);
-            };
+            });
+
             area.appendChild(btn);
         });
     }
@@ -270,7 +265,7 @@ function highlight(btn){
 
 /* CHECK */
 function checkAnswer(){
-    if(userAns==null){
+    if(userAns===null){
         showPopup("Select answer","wrong");
         return;
     }
@@ -297,8 +292,7 @@ function nextQuestion(){
 
         document.getElementById("gameScreen").style.display="none";
         document.getElementById("levelScreen").style.display="block";
-    }
-    else{
+    }else{
         loadQ();
     }
 }
