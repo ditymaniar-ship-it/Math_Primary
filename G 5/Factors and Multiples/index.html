@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Math Adventure</title>
+<title>Math Adventure G5</title>
 
 <style>
 body{font-family:Arial;text-align:center;background:linear-gradient(#89f7fe,#66a6ff);}
@@ -14,14 +14,9 @@ border:none;border-radius:10px;cursor:pointer;
 }
 .selected{background:orange !important;}
 
-.level-container{
-display:grid;grid-template-columns:repeat(2,1fr);gap:15px;
-}
-.level-card{
-background:linear-gradient(135deg,#ff9a9e,#fad0c4);
-padding:20px;border-radius:15px;cursor:pointer;
-}
-.level-card.locked{background:grey;opacity:0.6;cursor:not-allowed;}
+.level-container{display:grid;grid-template-columns:repeat(2,1fr);gap:15px;}
+.level-card{background:linear-gradient(#ff9a9e,#fad0c4);padding:20px;border-radius:15px;cursor:pointer;}
+.level-card.locked{background:grey;opacity:0.6;}
 .level-card.boss{background:gold;grid-column:span 2;}
 
 .popup{
@@ -32,6 +27,14 @@ display:none;color:white;
 }
 .correct{background:green;}
 .wrong{background:red;}
+
+/* PROGRESS BAR */
+.progress{
+width:100%;background:#ddd;border-radius:10px;margin:10px 0;
+}
+.progress-bar{
+height:20px;background:#4CAF50;border-radius:10px;width:0%;
+}
 </style>
 </head>
 
@@ -39,7 +42,7 @@ display:none;color:white;
 
 <div class="game-box">
 
-<h2>🎮 Math Adventure</h2>
+<h2>🎮 Math Adventure (G5)</h2>
 
 <div id="startScreen">
 <input id="playerName" placeholder="Enter name">
@@ -48,17 +51,19 @@ display:none;color:white;
 </div>
 
 <div id="levelScreen" style="display:none;">
-<h3>🌟 Choose Your Mission</h3>
+<h3>🌟 Choose Level</h3>
 <div class="level-container">
-<div class="level-card" onclick="startLevel(1)">Level 1<br>Factors</div>
-<div id="lvl2" class="level-card locked" onclick="startLevel(2)">Level 2<br>Multiples</div>
-<div id="lvl3" class="level-card locked" onclick="startLevel(3)">Level 3<br>HCF</div>
-<div id="lvl4" class="level-card locked" onclick="startLevel(4)">Level 4<br>LCM</div>
+<div class="level-card" onclick="startLevel(1)">Factors</div>
+<div id="lvl2" class="level-card locked" onclick="startLevel(2)">Multiples</div>
+<div id="lvl3" class="level-card locked" onclick="startLevel(3)">HCF</div>
+<div id="lvl4" class="level-card locked" onclick="startLevel(4)">LCM</div>
 <div id="boss" class="level-card boss locked" onclick="startLevel(5)">👑 Boss</div>
 </div>
 </div>
 
 <div id="gameScreen" style="display:none;">
+<div class="progress"><div id="bar" class="progress-bar"></div></div>
+
 <p id="status"></p>
 <p id="question"></p>
 <div id="area"></div>
@@ -74,14 +79,12 @@ display:none;color:white;
 <script>
 
 let level=1, unlocked=1, qIndex=0;
-let answer=null, userAns=null;
-let usedQuestions=[];
+let answer=null, userAns=null, attempts=0;
 
 /* START */
 function startGame(){
     if(playerName.value.trim()===""){
-        showPopup("Enter name","wrong");
-        return;
+        showPopup("Enter name","wrong"); return;
     }
     startScreen.style.display="none";
     levelScreen.style.display="block";
@@ -89,59 +92,47 @@ function startGame(){
 
 /* LEVEL */
 function startLevel(l){
-    if(l>unlocked){
-        showPopup("Locked","wrong");
-        return;
-    }
-
-    level=l;
-    qIndex=0;
-    usedQuestions=[];
-
+    if(l>unlocked){showPopup("Locked","wrong");return;}
+    level=l; qIndex=0;
     levelScreen.style.display="none";
     gameScreen.style.display="block";
-
     loadQ();
 }
 
-/* RANDOM HELPERS */
-function rand(min,max){
-    return Math.floor(Math.random()*(max-min+1))+min;
-}
+/* RANDOM */
+function rand(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
 
-/* LOAD QUESTION */
+/* LOAD */
 function loadQ(){
 
+    attempts=0;
+    userAns=null;
     nextBtn.style.display="none";
     area.innerHTML="";
-    userAns=null;
 
     status.innerText="Question "+(qIndex+1)+" of 3";
 
-    let key;
+    // PROGRESS
+    bar.style.width=(qIndex*33)+"%";
 
-    do{
-        key=Math.random();
-    }while(usedQuestions.includes(key));
+    let difficulty=qIndex; // 0 easy,1 med,2 hard
 
-    usedQuestions.push(key);
-
-    // LEVEL 1 – FACTORS
+    // LEVEL 1 FACTORS
     if(level===1){
-        let num=rand(10,20);
+        let num = difficulty===0 ? rand(10,20) :
+                  difficulty===1 ? rand(20,40) :
+                                   rand(40,80);
+
         question.innerText="Select ALL factors of "+num;
 
-        answer=[];
-        userAns=[];
+        answer=[]; userAns=[];
 
-        let opts=[];
         for(let i=1;i<=num;i++){
             if(num%i===0) answer.push(i);
         }
 
-        for(let i=1;i<=num;i++){
-            if(i<=8) opts.push(i);
-        }
+        let opts=[];
+        for(let i=1;i<=10;i++) opts.push(i);
 
         opts.forEach(o=>{
             let btn=document.createElement("button");
@@ -157,19 +148,21 @@ function loadQ(){
                     btn.classList.add("selected");
                 }
             };
-
             area.appendChild(btn);
         });
     }
 
-    // LEVEL 2 – MULTIPLES
+    // LEVEL 2 MULTIPLES
     else if(level===2){
-        let base=rand(2,6);
+        let base = difficulty===0 ? rand(2,5) :
+                   difficulty===1 ? rand(5,9) :
+                                    rand(9,12);
+
         let correct=base*rand(2,5);
 
         question.innerText="Which is a multiple of "+base+"?";
 
-        let opts=[correct, correct+1, correct+2, correct+3];
+        let opts=[correct,correct+1,correct+2,correct+3];
         answer=correct;
 
         opts.sort(()=>Math.random()-0.5);
@@ -178,25 +171,16 @@ function loadQ(){
             let btn=document.createElement("button");
             btn.className="option";
             btn.innerText=o;
-
-            btn.onclick=()=>{
-                userAns=o;
-                highlight(btn);
-            };
-
+            btn.onclick=()=>{userAns=o;highlight(btn);};
             area.appendChild(btn);
         });
     }
 
-    // LEVEL 3 – HCF
+    // LEVEL 3 HCF
     else if(level===3){
-        let a=rand(6,20), b=rand(6,20);
+        let a=rand(10,50), b=rand(10,50);
 
-        function hcf(x,y){
-            while(y){[x,y]=[y,x%y];}
-            return x;
-        }
-
+        function hcf(x,y){while(y){[x,y]=[y,x%y];}return x;}
         answer=hcf(a,b);
 
         question.innerText="HCF of "+a+" and "+b+" is ___";
@@ -206,21 +190,15 @@ function loadQ(){
         area.appendChild(inp);
     }
 
-    // LEVEL 4 – LCM
+    // LEVEL 4 LCM
     else if(level===4){
-        let a=rand(2,10), b=rand(2,10);
+        let a=rand(2,12), b=rand(2,12);
 
+        function gcd(x,y){while(y){[x,y]=[y,x%y];}return x;}
         let lcm=(a*b)/gcd(a,b);
 
-        function gcd(x,y){
-            while(y){[x,y]=[y,x%y];}
-            return x;
-        }
-
-        let statement = Math.random()>0.5;
-        let shown = statement ? lcm : lcm+rand(1,3);
-
-        answer = (shown===lcm);
+        let shown = Math.random()>0.5 ? lcm : lcm+rand(1,5);
+        answer=(shown===lcm);
 
         question.innerText="LCM of "+a+" and "+b+" is "+shown;
 
@@ -228,25 +206,18 @@ function loadQ(){
             let btn=document.createElement("button");
             btn.className="option";
             btn.innerText=v;
-
-            btn.onclick=()=>{
-                userAns=(v==="True");
-                highlight(btn);
-            };
-
+            btn.onclick=()=>{userAns=(v==="True");highlight(btn);};
             area.appendChild(btn);
         });
     }
 
     // BOSS
     else{
-        let num=rand(10,20);
-        question.innerText="Select ALL multiples of 3";
-
-        answer=[3,6,9];
+        question.innerText="Select ALL multiples of 6";
+        answer=[6,12,18];
         userAns=[];
 
-        [2,3,4,6,9].forEach(o=>{
+        [3,6,9,12,18].forEach(o=>{
             let btn=document.createElement("button");
             btn.className="option";
             btn.innerText=o;
@@ -260,24 +231,16 @@ function loadQ(){
                     btn.classList.add("selected");
                 }
             };
-
             area.appendChild(btn);
         });
     }
 }
 
-/* HIGHLIGHT */
-function highlight(btn){
-    document.querySelectorAll(".option").forEach(b=>b.classList.remove("selected"));
-    btn.classList.add("selected");
-}
-
 /* CHECK */
 function checkAnswer(){
 
-    if(userAns===null || (Array.isArray(userAns) && userAns.length===0)){
-        showPopup("Select answer","wrong");
-        return;
+    if(userAns===null || (Array.isArray(userAns)&&userAns.length===0)){
+        showPopup("Select answer","wrong"); return;
     }
 
     if(Array.isArray(answer)){
@@ -288,14 +251,23 @@ function checkAnswer(){
             showPopup("Correct 🎉","correct");
             nextBtn.style.display="inline";
         }else{
-            showPopup("Try Again","wrong");
+            attempts++;
+            if(attempts===2){
+                showPopup("Answer: "+answer.join(","),"correct");
+                nextBtn.style.display="inline";
+            }else showPopup("Try Again","wrong");
         }
-    }else{
+    }
+    else{
         if(userAns==answer){
             showPopup("Correct 🎉","correct");
             nextBtn.style.display="inline";
         }else{
-            showPopup("Try Again","wrong");
+            attempts++;
+            if(attempts===2){
+                showPopup("Answer: "+answer,"correct");
+                nextBtn.style.display="inline";
+            }else showPopup("Try Again","wrong");
         }
     }
 }
@@ -306,7 +278,6 @@ function nextQuestion(){
 
     if(qIndex===3){
         unlocked++;
-
         if(unlocked>=2) lvl2.classList.remove("locked");
         if(unlocked>=3) lvl3.classList.remove("locked");
         if(unlocked>=4) lvl4.classList.remove("locked");
@@ -314,17 +285,20 @@ function nextQuestion(){
 
         gameScreen.style.display="none";
         levelScreen.style.display="block";
-    }
-    else loadQ();
+    }else loadQ();
 }
 
-/* POPUP */
+/* UI */
+function highlight(btn){
+    document.querySelectorAll(".option").forEach(b=>b.classList.remove("selected"));
+    btn.classList.add("selected");
+}
+
 function showPopup(msg,type){
     popup.className="popup "+type;
     popup.innerText=msg;
     popup.style.display="block";
-
-    setTimeout(()=>popup.style.display="none",1000);
+    setTimeout(()=>popup.style.display="none",1200);
 }
 
 </script>
