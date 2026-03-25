@@ -2,6 +2,7 @@
 <html>
 <head>
 <title>Factors & Multiples Racing Game</title>
+
 <style>
 body{
     font-family: Arial;
@@ -14,31 +15,43 @@ body{
     width:90%;
     height:120px;
     margin:20px auto;
-    background:#555;
-    position:relative;
+    background:#444;
     border-radius:10px;
+    position:relative;
 }
 
 /* CAR */
 #car{
     width:80px;
+    height:40px;
+    background:red;
     position:absolute;
-    top:20px;
+    top:40px;
     left:0;
-    transition: left 0.5s;
+    border-radius:10px;
 }
+#car:before, #car:after{
+    content:"";
+    width:20px;
+    height:20px;
+    background:black;
+    border-radius:50%;
+    position:absolute;
+    bottom:-10px;
+}
+#car:before{ left:10px; }
+#car:after{ right:10px; }
 
-/* FINISH LINE */
+/* FINISH */
 #finish{
     position:absolute;
     right:10px;
-    top:0;
-    height:100%;
     width:5px;
+    height:100%;
     background:white;
 }
 
-/* QUESTION BOX */
+/* BOX */
 #box{
     background:white;
     padding:20px;
@@ -49,7 +62,7 @@ body{
 }
 
 button{
-    padding:10px;
+    padding:10px 15px;
     margin:5px;
     font-size:16px;
     cursor:pointer;
@@ -77,138 +90,146 @@ button{
 <h2>🚗 Factors & Multiples Racing Game</h2>
 
 <div id="track">
-    <img id="car" src="https://cdn-icons-png.flaticon.com/512/743/743922.png">
+    <div id="car"></div>
     <div id="finish"></div>
 </div>
 
 <div id="progress"><div id="bar"></div></div>
 
 <div id="box">
-    <h3 id="q">Question</h3>
+    <h3 id="q"></h3>
     <div id="options"></div>
     <p id="msg"></p>
+    <p id="levelDisplay"></p>
 </div>
 
 <script>
-let position=0;
-let level=1;
-let wrong=0;
-let correctAns=0;
-let totalQ=0;
 
-/* RANDOM NUMBER */
-function rand(min,max){
-    return Math.floor(Math.random()*(max-min+1))+min;
-}
+/* ================= QUESTION BANK ================= */
+let allQuestions = [
 
-/* GENERATE QUESTION */
-function loadQ(){
-    wrong=0;
-    document.getElementById("msg").innerHTML="";
+{type:"factor", q:"Which is a factor of 24?", options:[5,6,7,11], ans:6},
+{type:"factor", q:"Which is a factor of 36?", options:[8,9,10,11], ans:9},
+{type:"factor", q:"Which is a factor of 45?", options:[4,6,9,8], ans:9},
 
-    let qText="";
-    let opts=[];
-    
-    /* LEVEL 1 – FACTORS */
-    if(level==1){
-        let num=rand(10,30);
-        qText="Which is a factor of "+num+" ?";
-        
-        correctAns = getFactor(num);
+{type:"multiple", q:"Which is a multiple of 7?", options:[45,49,50,52], ans:49},
+{type:"multiple", q:"Which is a multiple of 9?", options:[63,62,61,65], ans:63},
+{type:"multiple", q:"Which is a multiple of 12?", options:[130,132,134,136], ans:132},
 
-        opts=[correctAns, rand(2,20), rand(2,20), rand(2,20)];
-    }
+{type:"hcf", q:"What is the HCF of 12 and 18?", options:[2,3,6,9], ans:6},
+{type:"hcf", q:"What is the HCF of 20 and 30?", options:[5,10,15,20], ans:10},
+{type:"hcf", q:"What is the HCF of 16 and 24?", options:[4,6,8,12], ans:8},
 
-    /* LEVEL 2 – MULTIPLES */
-    else if(level==2){
-        let base=rand(3,12);
-        qText="Which is a multiple of "+base+" ?";
-        
-        correctAns = base * rand(2,10);
+{type:"lcm", q:"What is the LCM of 4 and 6?", options:[10,12,18,24], ans:12},
+{type:"lcm", q:"What is the LCM of 5 and 8?", options:[20,30,40,45], ans:40},
+{type:"lcm", q:"What is the LCM of 3 and 7?", options:[14,18,21,24], ans:21},
 
-        opts=[correctAns, rand(10,100), rand(10,100), rand(10,100)];
-    }
+{type:"word", q:"Two bells ring every 6 and 8 minutes. When together again?", options:[12,24,36,48], ans:24},
+{type:"word", q:"12 chocolates & 18 toffees. Max equal groups?", options:[3,6,9,12], ans:6},
+{type:"word", q:"Pack in 5s and 10s. Least number?", options:[10,15,20,25], ans:20},
 
-    /* LEVEL 3 – MIXED */
-    else{
-        if(Math.random()>0.5){
-            let num=rand(20,50);
-            qText="Select a factor of "+num;
-            correctAns = getFactor(num);
-            opts=[correctAns, rand(2,40), rand(2,40), rand(2,40)];
-        }else{
-            let base=rand(4,15);
-            qText="Select a multiple of "+base;
-            correctAns = base * rand(2,10);
-            opts=[correctAns, rand(10,100), rand(10,100), rand(10,100)];
-        }
-    }
+];
 
-    /* SHUFFLE OPTIONS */
-    opts = shuffle(opts);
-
-    /* DISPLAY */
-    document.getElementById("q").innerHTML=qText;
-    let html="";
-    opts.forEach(o=>{
-        html+=`<button onclick="check(${o})">${o}</button>`;
-    });
-    document.getElementById("options").innerHTML=html;
-}
-
-/* GET CORRECT FACTOR */
-function getFactor(num){
-    let factors=[];
-    for(let i=1;i<=num;i++){
-        if(num%i===0) factors.push(i);
-    }
-    return factors[rand(0,factors.length-1)];
-}
-
-/* SHUFFLE */
+/* ================= HELPERS ================= */
 function shuffle(arr){
     return arr.sort(()=>Math.random()-0.5);
 }
 
-/* CHECK ANSWER */
+/* ================= LEVEL LOGIC ================= */
+function getLevelQuestions(level){
+
+    let f = allQuestions.filter(q=>q.type==="factor");
+    let m = allQuestions.filter(q=>q.type==="multiple");
+    let h = allQuestions.filter(q=>q.type==="hcf");
+    let l = allQuestions.filter(q=>q.type==="lcm");
+    let w = allQuestions.filter(q=>q.type==="word");
+
+    if(level===1){
+        return shuffle([
+            ...shuffle(f).slice(0,3),
+            ...shuffle(m).slice(0,2)
+        ]);
+    }
+
+    if(level===2){
+        return shuffle([
+            ...shuffle(m).slice(0,2),
+            ...shuffle(h).slice(0,3)
+        ]);
+    }
+
+    if(level===3){
+        return shuffle([
+            ...shuffle(l).slice(0,3),
+            ...shuffle(w).slice(0,2)
+        ]);
+    }
+}
+
+/* ================= GAME STATE ================= */
+let level=1;
+let qIndex=0;
+let currentSet=getLevelQuestions(level);
+let correctAns=null;
+let position=0;
+
+/* ================= LOAD QUESTION ================= */
+function loadQ(){
+
+    document.getElementById("levelDisplay").innerHTML="Level "+level;
+
+    let qObj=currentSet[qIndex];
+
+    document.getElementById("q").innerHTML=qObj.q;
+    correctAns=qObj.ans;
+
+    let html="";
+    shuffle(qObj.options).forEach(opt=>{
+        html+=`<button onclick="check(${opt})">${opt}</button>`;
+    });
+
+    document.getElementById("options").innerHTML=html;
+    document.getElementById("msg").innerHTML="";
+}
+
+/* ================= CHECK ================= */
 function check(ans){
-    totalQ++;
 
     if(ans===correctAns){
-        position+=10;
+
         document.getElementById("msg").innerHTML="✅ Correct!";
         moveCar();
-        nextLevel();
-    }else{
-        wrong++;
-        document.getElementById("msg").innerHTML="❌ Try again!";
-        
-        if(wrong==2){
-            document.getElementById("msg").innerHTML="👉 Correct answer: "+correctAns;
+
+        qIndex++;
+
+        if(qIndex===5){
+            level++;
+
+            if(level>3){
+                alert("🏁 You Won the Race!");
+                location.reload();
+                return;
+            }
+
+            currentSet=getLevelQuestions(level);
+            qIndex=0;
         }
+
+        setTimeout(loadQ,600);
+
+    }else{
+        document.getElementById("msg").innerHTML="❌ Try again!";
     }
 }
 
-/* MOVE CAR */
+/* ================= CAR ================= */
 function moveCar(){
+    position+=6;   // smooth movement
     document.getElementById("car").style.left=position+"%";
     document.getElementById("bar").style.width=position+"%";
-
-    if(position>=90){
-        alert("🏁 You Won the Race!");
-        location.reload();
-    }
 }
 
-/* ADAPTIVE LEVEL */
-function nextLevel(){
-    if(totalQ>3) level=2;
-    if(totalQ>6) level=3;
-
-    setTimeout(loadQ,1000);
-}
-
-/* START */
+/* ================= START ================= */
 loadQ();
 
 </script>
