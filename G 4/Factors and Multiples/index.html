@@ -13,7 +13,7 @@ body{
 .game-box{
     background:white;
     padding:20px;
-    width:500px;
+    width:520px;
     margin:40px auto;
     border-radius:15px;
 }
@@ -49,11 +49,10 @@ input{padding:10px;width:70%;}
     border-radius:15px;
     cursor:pointer;
     transition:0.3s;
+    font-weight:bold;
 }
 
-.level-card:hover{
-    transform:scale(1.05);
-}
+.level-card:hover{transform:scale(1.05);}
 
 .level-card.locked{
     background:grey;
@@ -77,7 +76,6 @@ input{padding:10px;width:70%;}
     display:none;
     color:white;
     z-index:10;
-    pointer-events:none;
 }
 .popup.correct{background:green;}
 .popup.wrong{background:red;}
@@ -85,7 +83,6 @@ input{padding:10px;width:70%;}
 /* PROGRESS */
 #progressBar{background:#ddd;height:10px;border-radius:10px;}
 #progressFill{height:100%;width:0%;background:green;}
-
 </style>
 </head>
 
@@ -109,23 +106,23 @@ input{padding:10px;width:70%;}
 <div class="level-container">
 
 <div class="level-card" onclick="startLevel(1)">
-<h3>Level 1</h3><p>Factors</p><span>⭐</span>
+Level 1<br>Factors ⭐
 </div>
 
 <div id="lvl2" class="level-card locked" onclick="startLevel(2)">
-<h3>Level 2</h3><p>Multiples</p><span>🔒</span>
+Level 2<br>Multiples 🔒
 </div>
 
 <div id="lvl3" class="level-card locked" onclick="startLevel(3)">
-<h3>Level 3</h3><p>HCF</p><span>🔒</span>
+Level 3<br>HCF 🔒
 </div>
 
 <div id="lvl4" class="level-card locked" onclick="startLevel(4)">
-<h3>Level 4</h3><p>LCM</p><span>🔒</span>
+Level 4<br>LCM 🔒
 </div>
 
 <div id="boss" class="level-card boss locked" onclick="startLevel(5)">
-<h3>👑 Boss</h3><p>Final Challenge</p><span>🔒</span>
+👑 Boss Level 🔒
 </div>
 
 </div>
@@ -133,7 +130,6 @@ input{padding:10px;width:70%;}
 
 <!-- GAME -->
 <div id="gameScreen" style="display:none;">
-<div id="progressBar"><div id="progressFill"></div></div>
 <p id="status"></p>
 <p id="question"></p>
 <div id="options"></div>
@@ -151,15 +147,14 @@ input{padding:10px;width:70%;}
 let level=1,unlocked=1,qIndex=0;
 let answers=[],selected=[],attempts=0;
 let usedQuestions=[];
-let difficulty=1;
 
 /* START */
 function startGame(){
     let name=document.getElementById("playerName").value.trim();
     if(name===""){showPopup("Enter name","wrong");return;}
 
-    startScreen.style.display="none";
-    levelScreen.style.display="block";
+    document.getElementById("startScreen").style.display="none";
+    document.getElementById("levelScreen").style.display="block";
 }
 
 /* LEVEL */
@@ -169,10 +164,9 @@ function startLevel(l){
     level=l;
     qIndex=0;
     usedQuestions=[];
-    difficulty=1;
 
-    levelScreen.style.display="none";
-    gameScreen.style.display="block";
+    document.getElementById("levelScreen").style.display="none";
+    document.getElementById("gameScreen").style.display="block";
 
     loadQ();
 }
@@ -180,14 +174,13 @@ function startLevel(l){
 /* LOAD QUESTIONS */
 function loadQ(){
     selected=[]; attempts=0;
-    nextBtn.style.display="none";
+    document.getElementById("nextBtn").style.display="none";
 
     let text="",opts=[],ans=[],key="";
 
     function used(k){return usedQuestions.includes(k);}
     function save(k){usedQuestions.push(k);}
 
-    // LEVEL 1
     if(level===1){
         let num;
         do{
@@ -204,7 +197,6 @@ function loadQ(){
         }
     }
 
-    // LEVEL 2
     else if(level===2){
         let n;
         do{
@@ -226,15 +218,9 @@ function loadQ(){
         }
     }
 
-    // LEVEL 3
     else if(level===3){
-        let a,b;
-        do{
-            a=10+Math.floor(Math.random()*20);
-            b=10+Math.floor(Math.random()*20);
-            key="H"+a+b;
-        }while(used(key));
-        save(key);
+        let a=10+Math.floor(Math.random()*20);
+        let b=10+Math.floor(Math.random()*20);
 
         function hcf(x,y){while(y){let t=y;y=x%y;x=t;}return x;}
         let c=hcf(a,b);
@@ -244,15 +230,9 @@ function loadQ(){
         opts=[c,c+1,c+2,c-1].filter(v=>v>0);
     }
 
-    // LEVEL 4 LCM
     else if(level===4){
-        let a,b;
-        do{
-            a=3+Math.floor(Math.random()*6);
-            b=4+Math.floor(Math.random()*6);
-            key="L"+a+b;
-        }while(used(key));
-        save(key);
+        let a=3+Math.floor(Math.random()*6);
+        let b=4+Math.floor(Math.random()*6);
 
         function lcm(x,y){
             let m=Math.max(x,y);
@@ -269,25 +249,14 @@ function loadQ(){
         opts=[c,c+2,c+4,c-2].filter(v=>v>0);
     }
 
-    // BOSS
     else{
-        function lcm(x,y){
-            let m=Math.max(x,y);
-            while(true){
-                if(m%x===0 && m%y===0) return m;
-                m++;
-            }
-        }
-
         let stories=[
-            {id:1,q:"👑 Lights blink every 3 & 4 mins. When together?",a:lcm(3,4)},
-            {id:2,q:"👑 Buses every 2 & 5 mins. When together?",a:lcm(2,5)},
-            {id:3,q:"👑 Claps every 4 & 6 sec. When together?",a:lcm(4,6)}
+            {q:"👑 Lights blink every 3 & 4 mins. When together?",a:12},
+            {q:"👑 Buses every 2 & 5 mins. When together?",a:10},
+            {q:"👑 Claps every 4 & 6 sec. When together?",a:12}
         ];
 
-        let s;
-        do{s=stories[Math.floor(Math.random()*3)];}while(used(s.id));
-        save(s.id);
+        let s=stories[Math.floor(Math.random()*stories.length)];
 
         text=s.q;
         ans=[s.a];
@@ -295,33 +264,32 @@ function loadQ(){
     }
 
     answers=ans;
-    question.innerText=text;
+
+    document.getElementById("question").innerText=text;
+    document.getElementById("status").innerText=`Level ${level} | Q${qIndex+1}/3`;
 
     opts.sort(()=>Math.random()-0.5);
 
-    options.innerHTML="";
+    let optDiv=document.getElementById("options");
+    optDiv.innerHTML="";
+
     opts.forEach(o=>{
         let btn=document.createElement("button");
         btn.className="option";
         btn.innerText=o;
-        btn.onclick=()=>selectOption(btn,o);
-        options.appendChild(btn);
+
+        btn.onclick=function(){
+            if(selected.includes(o)){
+                selected=selected.filter(v=>v!==o);
+                btn.classList.remove("selected");
+            }else{
+                selected.push(o);
+                btn.classList.add("selected");
+            }
+        };
+
+        optDiv.appendChild(btn);
     });
-
-    status.innerText=`Level ${level} | Q${qIndex+1}/3`;
-}
-
-/* SELECT */
-function selectOption(btn,val){
-    if(btn.disabled) return;
-
-    if(selected.includes(val)){
-        selected=selected.filter(v=>v!==val);
-        btn.classList.remove("selected");
-    }else{
-        selected.push(val);
-        btn.classList.add("selected");
-    }
 }
 
 /* CHECK */
@@ -337,7 +305,7 @@ function checkAnswer(){
             confetti();
         }
 
-        nextBtn.style.display="inline";
+        document.getElementById("nextBtn").style.display="inline";
     }else{
         attempts++;
 
@@ -351,7 +319,7 @@ function checkAnswer(){
                 b.disabled=true;
             });
 
-            nextBtn.style.display="inline";
+            document.getElementById("nextBtn").style.display="inline";
             return;
         }
 
@@ -366,13 +334,13 @@ function nextQuestion(){
     if(qIndex===3){
         unlocked++;
 
-        if(unlocked>=2){lvl2.classList.remove("locked");lvl2.querySelector("span").innerText="⭐";}
-        if(unlocked>=3){lvl3.classList.remove("locked");lvl3.querySelector("span").innerText="⭐";}
-        if(unlocked>=4){lvl4.classList.remove("locked");lvl4.querySelector("span").innerText="⭐";}
-        if(unlocked>=5){boss.classList.remove("locked");boss.querySelector("span").innerText="🔥";}
+        if(unlocked>=2) document.getElementById("lvl2").classList.remove("locked");
+        if(unlocked>=3) document.getElementById("lvl3").classList.remove("locked");
+        if(unlocked>=4) document.getElementById("lvl4").classList.remove("locked");
+        if(unlocked>=5) document.getElementById("boss").classList.remove("locked");
 
-        gameScreen.style.display="none";
-        levelScreen.style.display="block";
+        document.getElementById("gameScreen").style.display="none";
+        document.getElementById("levelScreen").style.display="block";
     }
     else loadQ();
 }
