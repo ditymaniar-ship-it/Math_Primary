@@ -16,11 +16,9 @@ body{
     width:520px;
     margin:40px auto;
     border-radius:15px;
-    position:relative;
-    z-index:1;
 }
 
-/* OPTIONS FIXED */
+/* OPTIONS */
 .option{
     display:block;
     width:80%;
@@ -31,18 +29,12 @@ body{
     border:none;
     border-radius:10px;
     cursor:pointer;
-    font-size:16px;
-    position:relative;
-    z-index:2;
 }
 
 .option:hover{background:#45a049;}
+.selected{background:orange !important;}
 
-.selected{
-    background:orange !important;
-}
-
-/* LEVEL CARDS */
+/* LEVELS */
 .level-container{
     display:grid;
     grid-template-columns:repeat(2,1fr);
@@ -77,7 +69,6 @@ body{
     border-radius:10px;
     display:none;
     color:white;
-    z-index:999;
 }
 .correct{background:green;}
 .wrong{background:red;}
@@ -137,8 +128,8 @@ function startGame(){
         showPopup("Enter name","wrong");
         return;
     }
-    document.getElementById("startScreen").style.display="none";
-    document.getElementById("levelScreen").style.display="block";
+    startScreen.style.display="none";
+    levelScreen.style.display="block";
 }
 
 /* LEVEL */
@@ -151,75 +142,73 @@ function startLevel(l){
     level=l;
     qIndex=0;
 
-    document.getElementById("levelScreen").style.display="none";
-    document.getElementById("gameScreen").style.display="block";
+    levelScreen.style.display="none";
+    gameScreen.style.display="block";
 
     loadQ();
 }
 
-/* LOAD */
+/* LOAD QUESTION */
 function loadQ(){
 
     userAns=null;
-    document.getElementById("nextBtn").style.display="none";
-
-    let area=document.getElementById("area");
+    nextBtn.style.display="none";
     area.innerHTML="";
 
-    document.getElementById("status").innerText="Question "+(qIndex+1)+" of 3";
+    status.innerText="Question "+(qIndex+1)+" of 3";
 
-    // LEVEL 1
+    // LEVEL 1 (MCQ)
     if(level===1){
-        document.getElementById("question").innerText="Which is a factor of 12?";
-        let opts=[2,3,5,7];
-        answer=2;
+        question.innerText="Which is NOT a factor of 12?";
+        let opts=[2,3,5,6];
+        answer=5;
 
         opts.forEach(o=>{
             let btn=document.createElement("button");
             btn.className="option";
             btn.innerText=o;
 
-            btn.addEventListener("click", function(){
+            btn.onclick=()=>{
                 userAns=o;
                 highlight(btn);
-            });
+            };
 
             area.appendChild(btn);
         });
     }
 
-    // LEVEL 2
+    // LEVEL 2 (MCQ)
     else if(level===2){
-        document.getElementById("question").innerText="Which is a multiple of 5?";
-        let opts=[10,12,14,17];
-        answer=10;
+        question.innerText="Which is a multiple of 4?";
+        let opts=[6,8,10,14];
+        answer=8;
 
         opts.forEach(o=>{
             let btn=document.createElement("button");
             btn.className="option";
             btn.innerText=o;
 
-            btn.addEventListener("click", function(){
+            btn.onclick=()=>{
                 userAns=o;
                 highlight(btn);
-            });
+            };
 
             area.appendChild(btn);
         });
     }
 
-    // LEVEL 3
+    // LEVEL 3 (FILL)
     else if(level===3){
-        document.getElementById("question").innerText="HCF of 12 and 18 is ___";
+        question.innerText="HCF of 12 and 18 is ___";
         let inp=document.createElement("input");
-        inp.oninput=function(){userAns=inp.value;};
+        inp.oninput=()=>userAns=inp.value;
         area.appendChild(inp);
         answer=6;
     }
 
-    // LEVEL 4
+    // LEVEL 4 (TRUE FALSE)
     else if(level===4){
-        document.getElementById("question").innerText="LCM of 4 and 6 is 12";
+        question.innerText="LCM of 4 and 6 is 12";
         answer=true;
 
         ["True","False"].forEach(v=>{
@@ -227,30 +216,36 @@ function loadQ(){
             btn.className="option";
             btn.innerText=v;
 
-            btn.addEventListener("click", function(){
+            btn.onclick=()=>{
                 userAns=(v==="True");
                 highlight(btn);
-            });
+            };
 
             area.appendChild(btn);
         });
     }
 
-    // BOSS
+    // 👑 BOSS (MULTI SELECT)
     else{
-        document.getElementById("question").innerText="Factor of 15?";
-        let opts=[2,3,4,5];
-        answer=3;
+        question.innerText="⚠ Select ALL factors of 15";
 
-        opts.forEach(o=>{
+        answer=[1,3,5];
+        userAns=[];
+
+        [1,2,3,4,5].forEach(o=>{
             let btn=document.createElement("button");
             btn.className="option";
             btn.innerText=o;
 
-            btn.addEventListener("click", function(){
-                userAns=o;
-                highlight(btn);
-            });
+            btn.onclick=()=>{
+                if(userAns.includes(o)){
+                    userAns=userAns.filter(x=>x!==o);
+                    btn.classList.remove("selected");
+                }else{
+                    userAns.push(o);
+                    btn.classList.add("selected");
+                }
+            };
 
             area.appendChild(btn);
         });
@@ -265,16 +260,32 @@ function highlight(btn){
 
 /* CHECK */
 function checkAnswer(){
-    if(userAns===null){
+
+    if(userAns===null || (Array.isArray(userAns) && userAns.length===0)){
         showPopup("Select answer","wrong");
         return;
     }
 
-    if(userAns==answer){
-        showPopup("Correct 🎉","correct");
-        document.getElementById("nextBtn").style.display="inline";
-    }else{
-        showPopup("Try Again","wrong");
+    // MULTI SELECT CHECK
+    if(Array.isArray(answer)){
+        let a=[...answer].sort();
+        let b=[...userAns].sort();
+
+        if(JSON.stringify(a)===JSON.stringify(b)){
+            showPopup("Boss Cleared 👑","correct");
+            nextBtn.style.display="inline";
+        }else{
+            showPopup("Try Again","wrong");
+        }
+    }
+
+    else{
+        if(userAns==answer){
+            showPopup("Correct 🎉","correct");
+            nextBtn.style.display="inline";
+        }else{
+            showPopup("Try Again","wrong");
+        }
     }
 }
 
@@ -285,26 +296,26 @@ function nextQuestion(){
     if(qIndex===3){
         unlocked++;
 
-        if(unlocked>=2) document.getElementById("lvl2").classList.remove("locked");
-        if(unlocked>=3) document.getElementById("lvl3").classList.remove("locked");
-        if(unlocked>=4) document.getElementById("lvl4").classList.remove("locked");
-        if(unlocked>=5) document.getElementById("boss").classList.remove("locked");
+        if(unlocked>=2) lvl2.classList.remove("locked");
+        if(unlocked>=3) lvl3.classList.remove("locked");
+        if(unlocked>=4) lvl4.classList.remove("locked");
+        if(unlocked>=5) boss.classList.remove("locked");
 
-        document.getElementById("gameScreen").style.display="none";
-        document.getElementById("levelScreen").style.display="block";
-    }else{
+        gameScreen.style.display="none";
+        levelScreen.style.display="block";
+    }
+    else{
         loadQ();
     }
 }
 
 /* POPUP */
 function showPopup(msg,type){
-    let p=document.getElementById("popup");
-    p.className="popup "+type;
-    p.innerText=msg;
-    p.style.display="block";
+    popup.className="popup "+type;
+    popup.innerText=msg;
+    popup.style.display="block";
 
-    setTimeout(()=>{p.style.display="none";},1000);
+    setTimeout(()=>popup.style.display="none",1000);
 }
 
 </script>
