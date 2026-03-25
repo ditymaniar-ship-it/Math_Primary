@@ -4,74 +4,34 @@
 <title>Math Adventure</title>
 
 <style>
-body{
-    font-family:Arial;
-    text-align:center;
-    background:linear-gradient(#89f7fe,#66a6ff);
-}
+body{font-family:Arial;text-align:center;background:linear-gradient(#89f7fe,#66a6ff);}
+.game-box{background:white;padding:20px;width:520px;margin:40px auto;border-radius:15px;}
 
-.game-box{
-    background:white;
-    padding:20px;
-    width:520px;
-    margin:40px auto;
-    border-radius:15px;
-}
-
-/* OPTIONS */
 .option{
-    display:block;
-    width:80%;
-    margin:10px auto;
-    background:#4CAF50;
-    color:white;
-    padding:12px;
-    border:none;
-    border-radius:10px;
-    cursor:pointer;
+display:block;width:80%;margin:10px auto;
+background:#4CAF50;color:white;padding:12px;
+border:none;border-radius:10px;cursor:pointer;
 }
-.option:hover{background:#45a049;}
 .selected{background:orange !important;}
 
-/* LEVELS */
 .level-container{
-    display:grid;
-    grid-template-columns:repeat(2,1fr);
-    gap:15px;
+display:grid;grid-template-columns:repeat(2,1fr);gap:15px;
 }
-
 .level-card{
-    background:linear-gradient(135deg,#ff9a9e,#fad0c4);
-    padding:20px;
-    border-radius:15px;
-    cursor:pointer;
+background:linear-gradient(135deg,#ff9a9e,#fad0c4);
+padding:20px;border-radius:15px;cursor:pointer;
 }
+.level-card.locked{background:grey;opacity:0.6;cursor:not-allowed;}
+.level-card.boss{background:gold;grid-column:span 2;}
 
-.level-card.locked{
-    background:grey;
-    opacity:0.6;
-    cursor:not-allowed;
-}
-
-.level-card.boss{
-    background:gold;
-    grid-column:span 2;
-}
-
-/* POPUP */
 .popup{
-    position:fixed;
-    top:50%;
-    left:50%;
-    transform:translate(-50%,-50%);
-    padding:20px;
-    border-radius:10px;
-    display:none;
-    color:white;
+position:fixed;top:50%;left:50%;
+transform:translate(-50%,-50%);
+padding:20px;border-radius:10px;
+display:none;color:white;
 }
 .correct{background:green;}
 .wrong{background:red;}
-
 </style>
 </head>
 
@@ -81,17 +41,14 @@ body{
 
 <h2>🎮 Math Adventure</h2>
 
-<!-- START -->
 <div id="startScreen">
 <input id="playerName" placeholder="Enter name">
 <br><br>
 <button onclick="startGame()">Start</button>
 </div>
 
-<!-- LEVEL SCREEN -->
 <div id="levelScreen" style="display:none;">
 <h3>🌟 Choose Your Mission</h3>
-
 <div class="level-container">
 <div class="level-card" onclick="startLevel(1)">Level 1<br>Factors</div>
 <div id="lvl2" class="level-card locked" onclick="startLevel(2)">Level 2<br>Multiples</div>
@@ -101,7 +58,6 @@ body{
 </div>
 </div>
 
-<!-- GAME -->
 <div id="gameScreen" style="display:none;">
 <p id="status"></p>
 <p id="question"></p>
@@ -119,11 +75,11 @@ body{
 
 let level=1, unlocked=1, qIndex=0;
 let answer=null, userAns=null;
+let usedQuestions=[];
 
 /* START */
 function startGame(){
-    let name=document.getElementById("playerName").value.trim();
-    if(name===""){
+    if(playerName.value.trim()===""){
         showPopup("Enter name","wrong");
         return;
     }
@@ -140,11 +96,17 @@ function startLevel(l){
 
     level=l;
     qIndex=0;
+    usedQuestions=[];
 
     levelScreen.style.display="none";
     gameScreen.style.display="block";
 
     loadQ();
+}
+
+/* RANDOM HELPERS */
+function rand(min,max){
+    return Math.floor(Math.random()*(max-min+1))+min;
 }
 
 /* LOAD QUESTION */
@@ -156,14 +118,32 @@ function loadQ(){
 
     status.innerText="Question "+(qIndex+1)+" of 3";
 
-    // LEVEL 1 – FACTORS (MULTI SELECT)
-    if(level===1){
-        question.innerText="⚠ Select ALL factors of 12";
+    let key;
 
-        answer=[1,2,3,4,6];
+    do{
+        key=Math.random();
+    }while(usedQuestions.includes(key));
+
+    usedQuestions.push(key);
+
+    // LEVEL 1 – FACTORS
+    if(level===1){
+        let num=rand(10,20);
+        question.innerText="Select ALL factors of "+num;
+
+        answer=[];
         userAns=[];
 
-        [1,2,3,4,5,6,7].forEach(o=>{
+        let opts=[];
+        for(let i=1;i<=num;i++){
+            if(num%i===0) answer.push(i);
+        }
+
+        for(let i=1;i<=num;i++){
+            if(i<=8) opts.push(i);
+        }
+
+        opts.forEach(o=>{
             let btn=document.createElement("button");
             btn.className="option";
             btn.innerText=o;
@@ -182,11 +162,17 @@ function loadQ(){
         });
     }
 
-    // LEVEL 2 – MULTIPLES (MCQ)
+    // LEVEL 2 – MULTIPLES
     else if(level===2){
-        question.innerText="Which is a multiple of 4?";
-        let opts=[6,8,10,14];
-        answer=8;
+        let base=rand(2,6);
+        let correct=base*rand(2,5);
+
+        question.innerText="Which is a multiple of "+base+"?";
+
+        let opts=[correct, correct+1, correct+2, correct+3];
+        answer=correct;
+
+        opts.sort(()=>Math.random()-0.5);
 
         opts.forEach(o=>{
             let btn=document.createElement("button");
@@ -202,19 +188,41 @@ function loadQ(){
         });
     }
 
-    // LEVEL 3 – HCF (FILL)
+    // LEVEL 3 – HCF
     else if(level===3){
-        question.innerText="HCF of 12 and 18 is ___";
+        let a=rand(6,20), b=rand(6,20);
+
+        function hcf(x,y){
+            while(y){[x,y]=[y,x%y];}
+            return x;
+        }
+
+        answer=hcf(a,b);
+
+        question.innerText="HCF of "+a+" and "+b+" is ___";
+
         let inp=document.createElement("input");
         inp.oninput=()=>userAns=inp.value;
         area.appendChild(inp);
-        answer=6;
     }
 
-    // LEVEL 4 – LCM (TRUE FALSE)
+    // LEVEL 4 – LCM
     else if(level===4){
-        question.innerText="LCM of 4 and 6 is 12";
-        answer=true;
+        let a=rand(2,10), b=rand(2,10);
+
+        let lcm=(a*b)/gcd(a,b);
+
+        function gcd(x,y){
+            while(y){[x,y]=[y,x%y];}
+            return x;
+        }
+
+        let statement = Math.random()>0.5;
+        let shown = statement ? lcm : lcm+rand(1,3);
+
+        answer = (shown===lcm);
+
+        question.innerText="LCM of "+a+" and "+b+" is "+shown;
 
         ["True","False"].forEach(v=>{
             let btn=document.createElement("button");
@@ -230,9 +238,10 @@ function loadQ(){
         });
     }
 
-    // BOSS LEVEL (MIX)
+    // BOSS
     else{
-        question.innerText="⚠ Select ALL multiples of 3";
+        let num=rand(10,20);
+        question.innerText="Select ALL multiples of 3";
 
         answer=[3,6,9];
         userAns=[];
@@ -271,7 +280,6 @@ function checkAnswer(){
         return;
     }
 
-    // MULTI SELECT
     if(Array.isArray(answer)){
         let a=[...answer].sort();
         let b=[...userAns].sort();
@@ -282,9 +290,7 @@ function checkAnswer(){
         }else{
             showPopup("Try Again","wrong");
         }
-    }
-
-    else{
+    }else{
         if(userAns==answer){
             showPopup("Correct 🎉","correct");
             nextBtn.style.display="inline";
@@ -309,9 +315,7 @@ function nextQuestion(){
         gameScreen.style.display="none";
         levelScreen.style.display="block";
     }
-    else{
-        loadQ();
-    }
+    else loadQ();
 }
 
 /* POPUP */
