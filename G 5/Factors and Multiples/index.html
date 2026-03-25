@@ -4,31 +4,76 @@
 <title>Math Adventure</title>
 
 <style>
-body{font-family:Arial;text-align:center;background:linear-gradient(#89f7fe,#66a6ff);}
-.game-box{background:white;padding:20px;width:520px;margin:40px auto;border-radius:15px;}
-
-.option{
-display:block;width:80%;margin:8px auto;
-background:#4CAF50;color:white;padding:10px;
-border:none;border-radius:8px;cursor:pointer;
+body{
+    font-family:Arial;
+    text-align:center;
+    background:linear-gradient(#89f7fe,#66a6ff);
 }
+
+.game-box{
+    background:white;
+    padding:20px;
+    width:520px;
+    margin:40px auto;
+    border-radius:15px;
+}
+
+/* OPTIONS */
+.option{
+    display:block;
+    width:80%;
+    margin:8px auto;
+    background:#4CAF50;
+    color:white;
+    padding:10px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+}
+.option:hover{background:#45a049;}
 .selected{background:orange;}
 
 /* LEVEL CARDS */
-.level-container{display:grid;grid-template-columns:repeat(2,1fr);gap:15px;}
-.level-card{
-background:linear-gradient(135deg,#ff9a9e,#fad0c4);
-padding:20px;border-radius:15px;cursor:pointer;
+.level-container{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:15px;
 }
-.level-card.locked{background:grey;color:white;pointer-events:none;}
-.level-card.boss{background:gold;grid-column:span 2;}
+
+.level-card{
+    background:linear-gradient(135deg,#ff9a9e,#fad0c4);
+    padding:20px;
+    border-radius:15px;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.level-card:hover{transform:scale(1.05);}
+
+/* LOCKED FIX */
+.level-card.locked{
+    background:grey;
+    color:white;
+    opacity:0.6;
+    cursor:not-allowed;
+}
+
+.level-card.boss{
+    background:gold;
+    grid-column:span 2;
+}
 
 /* POPUP */
 .popup{
-position:fixed;top:50%;left:50%;
-transform:translate(-50%,-50%);
-padding:20px;border-radius:10px;
-display:none;color:white;
+    position:fixed;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+    padding:20px;
+    border-radius:10px;
+    display:none;
+    color:white;
+    z-index:999;
 }
 .correct{background:green;}
 .wrong{background:red;}
@@ -53,11 +98,27 @@ display:none;color:white;
 <h3>🌟 Choose Your Mission</h3>
 
 <div class="level-container">
-<div class="level-card" onclick="startLevel(1)">Level 1<br>Factors</div>
-<div id="lvl2" class="level-card locked" onclick="startLevel(2)">Level 2<br>Multiples</div>
-<div id="lvl3" class="level-card locked" onclick="startLevel(3)">Level 3<br>HCF</div>
-<div id="lvl4" class="level-card locked" onclick="startLevel(4)">Level 4<br>LCM</div>
-<div id="boss" class="level-card boss locked" onclick="startLevel(5)">👑 Boss</div>
+
+<div class="level-card" onclick="startLevel(1)">
+Level 1<br>Factors
+</div>
+
+<div id="lvl2" class="level-card locked" onclick="startLevel(2)">
+Level 2<br>Multiples
+</div>
+
+<div id="lvl3" class="level-card locked" onclick="startLevel(3)">
+Level 3<br>HCF
+</div>
+
+<div id="lvl4" class="level-card locked" onclick="startLevel(4)">
+Level 4<br>LCM
+</div>
+
+<div id="boss" class="level-card boss locked" onclick="startLevel(5)">
+👑 Boss Level
+</div>
+
 </div>
 </div>
 
@@ -78,46 +139,51 @@ display:none;color:white;
 <script>
 
 let level=1, unlocked=1, qIndex=0;
-let answer, userAns;
+let answer=null, userAns=null;
 
 /* START */
 function startGame(){
-    if(playerName.value.trim()===""){
+    let name=document.getElementById("playerName").value.trim();
+    if(name===""){
         showPopup("Enter name","wrong");
         return;
     }
-    startScreen.style.display="none";
-    levelScreen.style.display="block";
+
+    document.getElementById("startScreen").style.display="none";
+    document.getElementById("levelScreen").style.display="block";
 }
 
-/* START LEVEL */
+/* LEVEL */
 function startLevel(l){
+
     if(l>unlocked){
-        showPopup("Locked","wrong");
+        showPopup("🔒 Level Locked","wrong");
         return;
     }
 
     level=l;
     qIndex=0;
 
-    levelScreen.style.display="none";
-    gameScreen.style.display="block";
+    document.getElementById("levelScreen").style.display="none";
+    document.getElementById("gameScreen").style.display="block";
 
     loadQ();
 }
 
-/* LOAD QUESTION */
+/* LOAD */
 function loadQ(){
-    nextBtn.style.display="none";
-    area.innerHTML="";
+
     userAns=null;
+    document.getElementById("nextBtn").style.display="none";
 
-    status.innerText=`Question ${qIndex+1} of 3`;
+    let area=document.getElementById("area");
+    area.innerHTML="";
 
-    // LEVEL 1 - FACTORS MCQ
+    document.getElementById("status").innerText="Question "+(qIndex+1)+" of 3";
+
+    // LEVEL 1
     if(level===1){
-        let num=12;
-        question.innerText="Which is a factor of 12?";
+        document.getElementById("question").innerText="Which is a factor of 12?";
         let opts=[2,3,5,7];
         answer=2;
 
@@ -125,14 +191,17 @@ function loadQ(){
             let btn=document.createElement("button");
             btn.className="option";
             btn.innerText=o;
-            btn.onclick=()=>userAns=o;
+            btn.onclick=function(){
+                userAns=o;
+                highlight(btn);
+            };
             area.appendChild(btn);
         });
     }
 
-    // LEVEL 2 - MULTIPLES MCQ
+    // LEVEL 2
     else if(level===2){
-        question.innerText="Which is a multiple of 5?";
+        document.getElementById("question").innerText="Which is a multiple of 5?";
         let opts=[10,12,14,17];
         answer=10;
 
@@ -140,82 +209,75 @@ function loadQ(){
             let btn=document.createElement("button");
             btn.className="option";
             btn.innerText=o;
-            btn.onclick=()=>userAns=o;
+            btn.onclick=function(){
+                userAns=o;
+                highlight(btn);
+            };
             area.appendChild(btn);
         });
     }
 
-    // LEVEL 3 - FILL
+    // LEVEL 3
     else if(level===3){
-        question.innerText="HCF of 12 and 18 is ___";
+        document.getElementById("question").innerText="HCF of 12 and 18 is ___";
         let inp=document.createElement("input");
-        inp.oninput=()=>userAns=inp.value;
+        inp.oninput=function(){userAns=inp.value;};
         area.appendChild(inp);
         answer=6;
     }
 
-    // LEVEL 4 - TRUE/FALSE
+    // LEVEL 4
     else if(level===4){
-        question.innerText="LCM of 4 and 6 is 12";
+        document.getElementById("question").innerText="LCM of 4 and 6 is 12";
+        answer=true;
 
         ["True","False"].forEach(v=>{
             let btn=document.createElement("button");
             btn.className="option";
             btn.innerText=v;
-            btn.onclick=()=>userAns=(v==="True");
+            btn.onclick=function(){
+                userAns=(v==="True");
+                highlight(btn);
+            };
             area.appendChild(btn);
         });
-
-        answer=true;
     }
 
-    // BOSS MIX
+    // BOSS
     else{
-        let types=["mcq","fill","tf"];
-        let t=types[Math.floor(Math.random()*3)];
+        document.getElementById("question").innerText="Factor of 15?";
+        let opts=[2,3,4,5];
+        answer=3;
 
-        if(t==="mcq"){
-            question.innerText="Factor of 15?";
-            answer=3;
-
-            [2,3,4,5].forEach(o=>{
-                let btn=document.createElement("button");
-                btn.className="option";
-                btn.innerText=o;
-                btn.onclick=()=>userAns=o;
-                area.appendChild(btn);
-            });
-        }
-
-        if(t==="fill"){
-            question.innerText="LCM of 3 and 5 is ___";
-            let inp=document.createElement("input");
-            inp.oninput=()=>userAns=inp.value;
-            area.appendChild(inp);
-            answer=15;
-        }
-
-        if(t==="tf"){
-            question.innerText="6 is a multiple of 3";
-
-            ["True","False"].forEach(v=>{
-                let btn=document.createElement("button");
-                btn.className="option";
-                btn.innerText=v;
-                btn.onclick=()=>userAns=(v==="True");
-                area.appendChild(btn);
-            });
-
-            answer=true;
-        }
+        opts.forEach(o=>{
+            let btn=document.createElement("button");
+            btn.className="option";
+            btn.innerText=o;
+            btn.onclick=function(){
+                userAns=o;
+                highlight(btn);
+            };
+            area.appendChild(btn);
+        });
     }
+}
+
+/* HIGHLIGHT */
+function highlight(btn){
+    document.querySelectorAll(".option").forEach(b=>b.classList.remove("selected"));
+    btn.classList.add("selected");
 }
 
 /* CHECK */
 function checkAnswer(){
+    if(userAns==null){
+        showPopup("Select answer","wrong");
+        return;
+    }
+
     if(userAns==answer){
         showPopup("Correct 🎉","correct");
-        nextBtn.style.display="inline";
+        document.getElementById("nextBtn").style.display="inline";
     }else{
         showPopup("Try Again","wrong");
     }
@@ -228,23 +290,27 @@ function nextQuestion(){
     if(qIndex===3){
         unlocked++;
 
-        if(unlocked>=2) lvl2.classList.remove("locked");
-        if(unlocked>=3) lvl3.classList.remove("locked");
-        if(unlocked>=4) lvl4.classList.remove("locked");
-        if(unlocked>=5) boss.classList.remove("locked");
+        if(unlocked>=2) document.getElementById("lvl2").classList.remove("locked");
+        if(unlocked>=3) document.getElementById("lvl3").classList.remove("locked");
+        if(unlocked>=4) document.getElementById("lvl4").classList.remove("locked");
+        if(unlocked>=5) document.getElementById("boss").classList.remove("locked");
 
-        gameScreen.style.display="none";
-        levelScreen.style.display="block";
+        document.getElementById("gameScreen").style.display="none";
+        document.getElementById("levelScreen").style.display="block";
     }
-    else loadQ();
+    else{
+        loadQ();
+    }
 }
 
 /* POPUP */
 function showPopup(msg,type){
-    popup.className="popup "+type;
-    popup.innerText=msg;
-    popup.style.display="block";
-    setTimeout(()=>popup.style.display="none",1000);
+    let p=document.getElementById("popup");
+    p.className="popup "+type;
+    p.innerText=msg;
+    p.style.display="block";
+
+    setTimeout(()=>{p.style.display="none";},1000);
 }
 
 </script>
