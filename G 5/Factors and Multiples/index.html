@@ -4,12 +4,26 @@
 <title>Math Adventure</title>
 
 <style>
-body{font-family:Arial;text-align:center;background:#66a6ff;}
-.game-box{background:white;padding:20px;width:550px;margin:40px auto;border-radius:15px;}
+body{font-family:Arial;text-align:center;background:linear-gradient(#89f7fe,#66a6ff);}
+.game-box{background:white;padding:20px;width:520px;margin:40px auto;border-radius:15px;}
 
-.option{display:block;margin:8px auto;padding:10px;width:80%;background:#4CAF50;color:white;border:none;border-radius:8px;cursor:pointer;}
+.option{
+display:block;width:80%;margin:8px auto;
+background:#4CAF50;color:white;padding:10px;
+border:none;border-radius:8px;cursor:pointer;
+}
 .selected{background:orange;}
 
+/* LEVEL CARDS */
+.level-container{display:grid;grid-template-columns:repeat(2,1fr);gap:15px;}
+.level-card{
+background:linear-gradient(135deg,#ff9a9e,#fad0c4);
+padding:20px;border-radius:15px;cursor:pointer;
+}
+.level-card.locked{background:grey;color:white;pointer-events:none;}
+.level-card.boss{background:gold;grid-column:span 2;}
+
+/* POPUP */
 .popup{
 position:fixed;top:50%;left:50%;
 transform:translate(-50%,-50%);
@@ -18,11 +32,6 @@ display:none;color:white;
 }
 .correct{background:green;}
 .wrong{background:red;}
-
-.match-box{display:flex;justify-content:space-around;}
-.match-col div{margin:10px;padding:8px;background:#ddd;cursor:pointer;border-radius:5px;}
-
-input{padding:10px;margin:10px;}
 </style>
 </head>
 
@@ -32,26 +41,34 @@ input{padding:10px;margin:10px;}
 
 <h2>🎮 Math Adventure</h2>
 
-<div id="start">
-<input id="name" placeholder="Enter name">
+<!-- START -->
+<div id="startScreen">
+<input id="playerName" placeholder="Enter name">
+<br><br>
 <button onclick="startGame()">Start</button>
 </div>
 
+<!-- LEVEL SCREEN -->
 <div id="levelScreen" style="display:none;">
-<h3>Select Level</h3>
-<button onclick="startLevel(1)">Level 1 MCQ</button>
-<button onclick="startLevel(2)">Level 2 Match</button>
-<button onclick="startLevel(3)">Level 3 Fill</button>
-<button onclick="startLevel(4)">Level 4 True/False</button>
-<button onclick="startLevel(5)">👑 Boss</button>
+<h3>🌟 Choose Your Mission</h3>
+
+<div class="level-container">
+<div class="level-card" onclick="startLevel(1)">Level 1<br>Factors</div>
+<div id="lvl2" class="level-card locked" onclick="startLevel(2)">Level 2<br>Multiples</div>
+<div id="lvl3" class="level-card locked" onclick="startLevel(3)">Level 3<br>HCF</div>
+<div id="lvl4" class="level-card locked" onclick="startLevel(4)">Level 4<br>LCM</div>
+<div id="boss" class="level-card boss locked" onclick="startLevel(5)">👑 Boss</div>
+</div>
 </div>
 
-<div id="game" style="display:none;">
+<!-- GAME -->
+<div id="gameScreen" style="display:none;">
+<p id="status"></p>
 <p id="question"></p>
 <div id="area"></div>
 
-<button onclick="check()">Submit</button>
-<button onclick="next()" id="nextBtn" style="display:none;">Next</button>
+<button onclick="checkAnswer()">Submit</button>
+<button onclick="nextQuestion()" id="nextBtn" style="display:none;">Next</button>
 </div>
 
 </div>
@@ -60,34 +77,44 @@ input{padding:10px;margin:10px;}
 
 <script>
 
-let level=1, qIndex=0;
+let level=1, unlocked=1, qIndex=0;
 let answer, userAns;
-let matches={};
 
 /* START */
 function startGame(){
-    if(name.value===""){show("Enter name","wrong");return;}
-    start.style.display="none";
+    if(playerName.value.trim()===""){
+        showPopup("Enter name","wrong");
+        return;
+    }
+    startScreen.style.display="none";
     levelScreen.style.display="block";
 }
 
-/* LEVEL */
+/* START LEVEL */
 function startLevel(l){
+    if(l>unlocked){
+        showPopup("Locked","wrong");
+        return;
+    }
+
     level=l;
     qIndex=0;
+
     levelScreen.style.display="none";
-    game.style.display="block";
+    gameScreen.style.display="block";
+
     loadQ();
 }
 
-/* LOAD QUESTIONS */
+/* LOAD QUESTION */
 function loadQ(){
     nextBtn.style.display="none";
     area.innerHTML="";
     userAns=null;
-    matches={};
 
-    // LEVEL 1 MCQ
+    status.innerText=`Question ${qIndex+1} of 3`;
+
+    // LEVEL 1 - FACTORS MCQ
     if(level===1){
         let num=12;
         question.innerText="Which is a factor of 12?";
@@ -95,49 +122,30 @@ function loadQ(){
         answer=2;
 
         opts.forEach(o=>{
-            let b=document.createElement("button");
-            b.className="option";
-            b.innerText=o;
-            b.onclick=()=>userAns=o;
-            area.appendChild(b);
+            let btn=document.createElement("button");
+            btn.className="option";
+            btn.innerText=o;
+            btn.onclick=()=>userAns=o;
+            area.appendChild(btn);
         });
     }
 
-    // LEVEL 2 MATCH
+    // LEVEL 2 - MULTIPLES MCQ
     else if(level===2){
-        question.innerText="Match number with its multiple";
+        question.innerText="Which is a multiple of 5?";
+        let opts=[10,12,14,17];
+        answer=10;
 
-        let left=[2,3,4];
-        let right=[8,6,12];
-
-        let div=document.createElement("div");
-        div.className="match-box";
-
-        let lcol=document.createElement("div");
-        let rcol=document.createElement("div");
-
-        left.forEach(l=>{
-            let d=document.createElement("div");
-            d.innerText=l;
-            d.onclick=()=>matches.left=l;
-            lcol.appendChild(d);
+        opts.forEach(o=>{
+            let btn=document.createElement("button");
+            btn.className="option";
+            btn.innerText=o;
+            btn.onclick=()=>userAns=o;
+            area.appendChild(btn);
         });
-
-        right.forEach(r=>{
-            let d=document.createElement("div");
-            d.innerText=r;
-            d.onclick=()=>matches.right=r;
-            rcol.appendChild(d);
-        });
-
-        div.appendChild(lcol);
-        div.appendChild(rcol);
-        area.appendChild(div);
-
-        answer={2:8,3:6,4:12};
     }
 
-    // LEVEL 3 FILL
+    // LEVEL 3 - FILL
     else if(level===3){
         question.innerText="HCF of 12 and 18 is ___";
         let inp=document.createElement("input");
@@ -146,18 +154,19 @@ function loadQ(){
         answer=6;
     }
 
-    // LEVEL 4 TRUE/FALSE
+    // LEVEL 4 - TRUE/FALSE
     else if(level===4){
         question.innerText="LCM of 4 and 6 is 12";
-        answer=true;
 
         ["True","False"].forEach(v=>{
-            let b=document.createElement("button");
-            b.className="option";
-            b.innerText=v;
-            b.onclick=()=>userAns=(v==="True");
-            area.appendChild(b);
+            let btn=document.createElement("button");
+            btn.className="option";
+            btn.innerText=v;
+            btn.onclick=()=>userAns=(v==="True");
+            area.appendChild(btn);
         });
+
+        answer=true;
     }
 
     // BOSS MIX
@@ -168,12 +177,13 @@ function loadQ(){
         if(t==="mcq"){
             question.innerText="Factor of 15?";
             answer=3;
+
             [2,3,4,5].forEach(o=>{
-                let b=document.createElement("button");
-                b.className="option";
-                b.innerText=o;
-                b.onclick=()=>userAns=o;
-                area.appendChild(b);
+                let btn=document.createElement("button");
+                btn.className="option";
+                btn.innerText=o;
+                btn.onclick=()=>userAns=o;
+                area.appendChild(btn);
             });
         }
 
@@ -187,51 +197,50 @@ function loadQ(){
 
         if(t==="tf"){
             question.innerText="6 is a multiple of 3";
-            answer=true;
+
             ["True","False"].forEach(v=>{
-                let b=document.createElement("button");
-                b.className="option";
-                b.innerText=v;
-                b.onclick=()=>userAns=(v==="True");
-                area.appendChild(b);
+                let btn=document.createElement("button");
+                btn.className="option";
+                btn.innerText=v;
+                btn.onclick=()=>userAns=(v==="True");
+                area.appendChild(btn);
             });
+
+            answer=true;
         }
     }
 }
 
 /* CHECK */
-function check(){
-
-    let correct=false;
-
-    if(level===2){
-        correct=(answer[matches.left]===matches.right);
-    }
-    else{
-        correct=(userAns==answer);
-    }
-
-    if(correct){
-        show("Correct 🎉","correct");
+function checkAnswer(){
+    if(userAns==answer){
+        showPopup("Correct 🎉","correct");
         nextBtn.style.display="inline";
-    }
-    else{
-        show("Try Again","wrong");
+    }else{
+        showPopup("Try Again","wrong");
     }
 }
 
 /* NEXT */
-function next(){
+function nextQuestion(){
     qIndex++;
+
     if(qIndex===3){
-        game.style.display="none";
+        unlocked++;
+
+        if(unlocked>=2) lvl2.classList.remove("locked");
+        if(unlocked>=3) lvl3.classList.remove("locked");
+        if(unlocked>=4) lvl4.classList.remove("locked");
+        if(unlocked>=5) boss.classList.remove("locked");
+
+        gameScreen.style.display="none";
         levelScreen.style.display="block";
     }
     else loadQ();
 }
 
 /* POPUP */
-function show(msg,type){
+function showPopup(msg,type){
     popup.className="popup "+type;
     popup.innerText=msg;
     popup.style.display="block";
